@@ -1,0 +1,39 @@
+{
+  "name": "time-axis",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "A time axis that can be zoomed and moved.",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xunmi1/time-axis.git"
+  },
+  "author": "xunmi <xunmi1@outlook.com>",
+  "license": "MIT",
+  "sideEffects": false,
+  "keywords": [
+    "time-axis",
+    "timeline",
+    "axis"
+  ],
+  "bugs": {
+    "url": "https://github.com/xunmi1/time-axis/issues"
+  },
+  "homepage": "https://github.com/xunmi1/time-axis#readme",
+  "dependencies": {
+    "dayjs": "^1.11.13"
+  },
+  "devDependencies": {
+    "@xunmi/prettier-config": "^1.0.2",
+    "prettier": "^3.3.3",
+    "typescript": "~5.6.3",
+    "vite": "^5.4.8"
+  }
+}

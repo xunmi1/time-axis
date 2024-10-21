@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>time-axis</title>
+
+    <style>
+      .time-axis {
+        width: 100%;
+        height: 120px;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="time-axis" class="time-axis" />
+    <script type="module">
+      import {
+        TimeAxis,
+        PreciseDate,
+        MarkLineDay1,
+        MarkLineHour1,
+        MarkLineMinutes10,
+        MarkLineMinute1,
+        MarkLineSeconds10,
+        MarkLineSecond1,
+        MarkLineMillseconds100,
+        MarkLineMillseconds10,
+        MarkLineMillsecond1,
+      } from './src';
+      const timeAxis = new TimeAxis(document.querySelector('#time-axis'));
+      timeAxis
+        .use(MarkLineDay1)
+        .use(MarkLineHour1)
+        .use(MarkLineMinutes10)
+        .use(MarkLineMinute1)
+        .use(MarkLineSeconds10)
+        .use(MarkLineSecond1)
+        .use(MarkLineMillseconds100)
+        .use(MarkLineMillseconds10)
+        .use(MarkLineMillsecond1);
+
+      timeAxis.date = new PreciseDate(new Date().valueOf());
+      timeAxis.render();
+    </script>
+  </body>
+</html>
