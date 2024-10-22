@@ -25,7 +25,8 @@ export class PreciseDate {
 
   format(template: string) {
     const decimal = this.#decimal;
-    return this.#value.format(template.replace('/(?<=S{3})(S+)/g', match => round(decimal, match.length)));
+    // `dayjs` 不支持超过三个 `S` 字符, 其代表比毫秒更低的单位, 需要进行补充
+    return this.#value.format(template.replace(/(?<=S{3})(S+)/g, match => round(decimal, match.length)));
   }
 
   get(unit: UnitType) {

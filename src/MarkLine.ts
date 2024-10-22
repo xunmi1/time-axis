@@ -173,7 +173,7 @@ export class MarkLineSecond1 extends MarkLine {
       this.drawMarkLine(x, 0, MarkLine.SMALL);
     }
 
-    if (this.isEvenly(current, MINUTE * (this.spacing > 8 ? 10 : 30))) {
+    if (this.isEvenly(current, SECOND * (this.spacing > 8 ? 10 : 30))) {
       this.fillText(current.format('HH:mm:ss'), x, 48);
     }
   }
