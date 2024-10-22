@@ -2,7 +2,7 @@
   "name": "time-axis",
   "version": "0.1.0",
   "type": "module",
-  "description": "A time axis that can be zoomed and moved.",
+  "description": "A time axis that can be scaled and moved.",
   "files": [
     "dist"
   ],

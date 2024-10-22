@@ -15,7 +15,7 @@ export class Indicator {
     this.timeAxis.context.canvas.addEventListener('mousemove', this.#onMove, { signal, passive: true });
     this.timeAxis.context.canvas.addEventListener('mouseleave', this.#onLeave, { signal, passive: true });
 
-    this.timeAxis.onDrawn(() => this.#draw());
+    this.timeAxis.onDrawn(() => this.draw());
   }
 
   destroy() {
@@ -25,7 +25,7 @@ export class Indicator {
   #onMove = (event: MouseEvent) => {
     this.#enabled = true;
     this.#offsetX = event.offsetX;
-    // 执行渲染，间接调用 this.#draw()
+    // 执行渲染，间接调用 this.draw()
     this.timeAxis.render();
   };
 
@@ -34,7 +34,7 @@ export class Indicator {
     this.timeAxis.render();
   };
 
-  #draw() {
+  draw() {
     if (!this.#enabled) return;
     const context = this.timeAxis.context;
 
@@ -51,7 +51,7 @@ export class Indicator {
     const context = this.timeAxis.context;
     const offsetX = this.#offsetX;
 
-    const bottom = context.canvas.offsetHeight;
+    const bottom = this.timeAxis.height;
     context.strokeStyle = '#1077f5';
     context.fillStyle = '#1077f5';
     context.lineWidth = 1;
@@ -81,7 +81,7 @@ export class Indicator {
     const offsetX = this.#offsetX;
     const bottom = this.timeAxis.baseline + 48;
     const boundStart = 0;
-    const boundEnd = context.canvas.width;
+    const boundEnd = this.timeAxis.width;
 
     const current = this.timeAxis.getDateByPos(this.#offsetX);
     let text: string;
@@ -92,18 +92,19 @@ export class Indicator {
     } else {
       text = current.format('YYYY-MM-DD HH:mm:ss.SSSSSS');
     }
-
+    // 需先设置字体，才能准确计算出文字尺寸
+    context.font = '12px system-ui';
     const textMetrics = context.measureText(text);
     // 四周额外增加 4px 的边距
-    const boxWidth = textMetrics.width + 8;
-    const boxHeight = textMetrics.fontBoundingBoxAscent + textMetrics.fontBoundingBoxDescent + 8;
+    const padding = 4;
+    const boxWidth = textMetrics.width + padding * 2;
+    const boxHeight = textMetrics.fontBoundingBoxAscent + textMetrics.fontBoundingBoxDescent + padding * 2;
     const boxPosX = Math.min(Math.max(offsetX - boxWidth / 2, boundStart), boundEnd - boxWidth);
     context.fillStyle = '#1077f5';
-    context.fillRect(boxPosX, bottom - textMetrics.fontBoundingBoxAscent - 4, boxWidth, boxHeight);
+    context.fillRect(boxPosX, bottom - textMetrics.fontBoundingBoxAscent - padding, boxWidth, boxHeight);
 
     context.fillStyle = '#fff';
     context.textAlign = 'left';
-    context.font = '12px system-ui';
-    context.fillText(text, boxPosX + 4, bottom);
+    context.fillText(text, boxPosX + padding, bottom);
   }
 }

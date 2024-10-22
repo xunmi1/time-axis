@@ -29,6 +29,14 @@ export class TimeAxis {
     canvas.addEventListener('wheel', this.#onWheel, { signal: this.#eventController.signal });
   }
 
+  get height() {
+    return this.transformPointInverse({ y: this.context.canvas.height }).y;
+  }
+
+  get width() {
+    return this.transformPointInverse({ x: this.context.canvas.width }).x;
+  }
+
   destroy() {
     this.clear();
     this.#eventController.abort();
@@ -47,11 +55,11 @@ export class TimeAxis {
     const canvas = this.context.canvas;
     canvas.width = canvas.clientWidth * ratio;
     canvas.height = canvas.clientHeight * ratio;
+    // 缩放转换后，屏幕坐标和内部坐标相同，仅尺寸不同
     this.context.scale(ratio, ratio);
   }
 
-  // TODO fix type
-  use(Line: any) {
+  use(Line: new (...args: any) => MarkLine) {
     this.#markLines.push(new Line(this));
     return this;
   }
@@ -74,11 +82,11 @@ export class TimeAxis {
     const context = this.context;
     const startDate = this.#getStartDate();
     const offset = this.getPosByDate(startDate);
-    context.save();
     this.#setGlobalStyle();
+    context.save();
     this.#drawAxisLine();
 
-    const total = Math.ceil(context.canvas.width / spacing);
+    const total = Math.ceil(this.width / spacing);
     for (let index = 0; index < total; index++) {
       const x = offset + index * spacing;
       const current = new PreciseDate(startDate.valueOf() + this.markLine.base * index);
@@ -128,7 +136,7 @@ export class TimeAxis {
   }
 
   scaleWithAnimation(ratio: number, x: number, duration = 200) {
-    const { promise, resolve, reject } = withResolvers<void>();
+    const { promise, resolve } = withResolvers<void>();
     if (this.canScale(ratio)) {
       let total = 1;
       this.#animationFrame.resume((pause, gap) => {
@@ -140,8 +148,6 @@ export class TimeAxis {
           resolve();
         }
       });
-    } else {
-      reject();
     }
 
     return promise;
@@ -217,9 +223,9 @@ export class TimeAxis {
     context.save();
     context.lineWidth = 1;
     context.beginPath();
-    // 在整数位置绘制 1px 线段会出现模糊问题, 因此加上 0.5
+    // 1px 线段会在路径两边各延伸 0.5px, 再非高分辨率屏下，其边缘不在像素边界位置，出现模糊
     context.moveTo(0, this.baseline + 0.5);
-    context.lineTo(context.canvas.width, this.baseline + 0.5);
+    context.lineTo(this.width, this.baseline + 0.5);
     context.stroke();
     context.restore();
   }
@@ -247,7 +253,7 @@ export class TimeAxis {
       return;
     }
 
-    const width = this.context.canvas.width;
+    const width = this.width;
     // 预设的间距
     const spacing = 6 / ratio;
     this.markLineIndex = this.#markLines.findLastIndex(markLine => {
@@ -255,5 +261,10 @@ export class TimeAxis {
       return difference <= duration;
     });
     this.spacing = Math.floor(width * ratio) / (difference / this.markLine.base);
+  }
+
+  transformPointInverse(origin: { x?: number; y?: number }) {
+    const point = this.context.getTransform().inverse().transformPoint(origin);
+    return { x: point.x, y: point.y };
   }
 }
