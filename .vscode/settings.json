@@ -1,0 +1,15 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  },
+  "files.watcherExclude": {
+    "dist/**": true
+  },
+  "files.readonlyInclude": {
+    "**/node_modules/**": true,
+    "dist/**": true
+  },
+  "prettier.configPath": "node_modules/@xunmi/prettier-config/index.json",
+  "typescript.tsdk": "node_modules/typescript/lib"
+}

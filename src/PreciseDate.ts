@@ -36,4 +36,8 @@ export class PreciseDate {
   set(unit: UnitType, value: number) {
     return new PreciseDate(this.#value.set(unit, value).valueOf() + this.#decimal);
   }
+
+  isDivisibleBy(divisor: number) {
+    return (this.valueOf() + this.utcOffset()) % divisor === 0;
+  }
 }
