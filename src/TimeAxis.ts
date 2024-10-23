@@ -4,6 +4,9 @@ import { PreciseDate } from './PreciseDate';
 import { Indicator } from './Indicator';
 import { withResolvers } from './utils';
 
+const SPACING_MIN = 2;
+const SPACING_MAX = 500;
+
 export class TimeAxis {
   context: CanvasRenderingContext2D;
   /** 刻度线间距 */
@@ -154,7 +157,7 @@ export class TimeAxis {
   }
 
   canScale(ratio: number) {
-    return (ratio < 1 && this.spacing >= 2) || (ratio > 1 && this.spacing < 500);
+    return (ratio < 1 && this.spacing >= SPACING_MIN) || (ratio > 1 && this.spacing <= SPACING_MAX);
   }
 
   #calcScale(ratio: number) {
@@ -255,12 +258,13 @@ export class TimeAxis {
 
     const width = this.width;
     // 预设的间距
-    const spacing = 6 / ratio;
-    this.markLineIndex = this.#markLines.findLastIndex(markLine => {
+    const spacing = 8 / ratio;
+    const index = this.#markLines.findLastIndex(markLine => {
       const duration = (width / spacing) * markLine.base;
       return difference <= duration;
     });
-    this.spacing = Math.floor(width * ratio) / (difference / this.markLine.base);
+    this.markLineIndex = index < 0 ? 0 : index;
+    this.spacing = Math.max(Math.floor(width * ratio) / (difference / this.markLine.base), SPACING_MIN);
   }
 
   transformPointInverse(origin: { x?: number; y?: number }) {
