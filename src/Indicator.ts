@@ -7,19 +7,16 @@ export class Indicator {
 
   #offsetX = 0;
   #enabled = false;
-  #eventController = new AbortController();
 
   constructor(timeAxis: TimeAxis) {
     this.timeAxis = timeAxis;
-    const signal = this.#eventController.signal;
-    this.timeAxis.context.canvas.addEventListener('mousemove', this.#onMove, { signal, passive: true });
-    this.timeAxis.context.canvas.addEventListener('mouseleave', this.#onLeave, { signal, passive: true });
-
+    this.timeAxis.addEventListener('mousemove', this.#onMove);
+    this.timeAxis.addEventListener('mouseleave', this.#onLeave);
     this.timeAxis.onDrawn(() => this.draw());
   }
 
   destroy() {
-    this.#eventController.abort();
+    this.#enabled = false;
   }
 
   #onMove = (event: MouseEvent) => {

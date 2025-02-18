@@ -28,8 +28,7 @@ export class TimeAxis {
     this.context = canvas.getContext('2d')!;
     this.#setRect();
     this.#indicator = new Indicator(this);
-
-    canvas.addEventListener('wheel', this.#onWheel, { signal: this.#eventController.signal });
+    this.addEventListener('wheel', this.#onWheel);
   }
 
   get height() {
@@ -38,6 +37,15 @@ export class TimeAxis {
 
   get width() {
     return this.transformPointInverse({ x: this.context.canvas.width }).x;
+  }
+
+  addEventListener<K extends keyof HTMLElementEventMap>(
+    type: K,
+    listener: (ev: HTMLElementEventMap[K]) => void,
+    options?: { once?: boolean; passive?: boolean }
+  ) {
+    const signal = this.#eventController.signal;
+    this.context.canvas.addEventListener(type, listener, { signal, ...options });
   }
 
   destroy() {
@@ -58,7 +66,7 @@ export class TimeAxis {
     const canvas = this.context.canvas;
     canvas.width = canvas.clientWidth * ratio;
     canvas.height = canvas.clientHeight * ratio;
-    // 缩放转换后，屏幕坐标和内部坐标相同，仅尺寸不同
+    // 缩放转换后，外部坐标和内部坐标相同，仅尺寸不同
     this.context.scale(ratio, ratio);
   }
 
@@ -245,7 +253,7 @@ export class TimeAxis {
   /**
    * 根据时间范围, 自适应时间轴的渲染范围
    * @param start - 起始时间
-   * @param end - =结束时间
+   * @param end - 结束时间
    * @param ratio - 占比
    */
   adaptiveByDateRange(start: PreciseDate, end: PreciseDate, ratio: number) {

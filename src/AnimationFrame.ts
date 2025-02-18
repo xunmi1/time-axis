@@ -3,7 +3,7 @@ export interface AnimationFrameCallback {
 }
 
 export class AnimationFrame {
-  #callback: AnimationFrameCallback;
+  #callback?: AnimationFrameCallback;
   #timestamp: number | undefined;
   #frameId: number | undefined;
 
@@ -11,7 +11,7 @@ export class AnimationFrame {
     const gap = this.#timestamp == null ? 0 : timestamp - this.#timestamp;
     this.#timestamp = timestamp;
     this.#frameId = window.requestAnimationFrame(this.#handler);
-    this.#callback(this.pause.bind(this), gap);
+    this.#callback?.(this.pause.bind(this), gap);
   };
 
   resume(callback: AnimationFrameCallback) {
@@ -25,5 +25,6 @@ export class AnimationFrame {
     window.cancelAnimationFrame(this.#frameId);
     this.#frameId = undefined;
     this.#timestamp = undefined;
+    this.#callback = undefined;
   }
 }
