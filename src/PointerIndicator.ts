@@ -14,23 +14,30 @@ declare module './theme' {
 
 /** 指针指示器 */
 export class PointerIndicator extends Indicator {
+  x: number | undefined;
+
   constructor(timeAxis: TimeAxis) {
     super(timeAxis);
-    this.timeAxis.onNative('pointermove', this.#onMove, { passive: true });
-    this.timeAxis.onNative('pointerleave', this.#onLeave, { passive: true });
+    timeAxis.onNative('pointermove', this.#onMove, { passive: true });
+    timeAxis.onNative('pointerleave', this.#onLeave, { passive: true });
+    timeAxis.on('beforeDraw', this.#updateDate);
   }
 
   override get theme() {
     return this.timeAxis.theme.pointerIndicator ?? super.theme;
   }
 
+  #updateDate = () => {
+    this.date = this.x == null ? undefined : this.timeAxis.getDateByPos(this.x);
+  };
+
   #onMove = (event: PointerEvent) => {
-    this.date = this.timeAxis.getDateByPos(event.offsetX);
+    this.x = event.offsetX;
     this.render();
   };
 
   #onLeave = () => {
-    this.date = undefined;
+    this.x = undefined;
     this.render();
   };
 }

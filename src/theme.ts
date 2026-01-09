@@ -1,11 +1,6 @@
 export interface Theme {
   backgroundColor: string;
   font: string;
-  axis: {
-    lineColor: string;
-    tickColor: string;
-    labelColor: string;
-  };
 }
 
 export const defaultTheme: Theme = {

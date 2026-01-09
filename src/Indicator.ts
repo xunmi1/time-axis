@@ -25,7 +25,7 @@ export class Indicator {
 
   constructor(timeAxis: TimeAxis) {
     this.timeAxis = timeAxis;
-    this.timeAxis.on('drawn', () => this.#draw());
+    this.timeAxis.on('drawn', () => this.draw());
     this.timeAxis.on('destroyed', () => this.destroy());
   }
 
@@ -33,10 +33,10 @@ export class Indicator {
     return this.timeAxis.theme.indicator;
   }
 
-  #draw() {
+  draw() {
     if (this.date == null) return;
-    const context = this.timeAxis.context;
     this.#offsetX = this.timeAxis.getPosByDate(this.date);
+    const context = this.timeAxis.context;
     context.save();
     this.#drawLine();
     context.restore();
@@ -94,9 +94,9 @@ export class Indicator {
 
     const current = this.timeAxis.getDateByPos(this.#offsetX);
     let text: string;
-    if (this.timeAxis.markLine.base > SECOND) {
+    if (this.timeAxis.markLine!.base > SECOND) {
       text = current.format('YYYY-MM-DD HH:mm:ss');
-    } else if (this.timeAxis.markLine.base > MILLISECOND * 10) {
+    } else if (this.timeAxis.markLine!.base > MILLISECOND * 10) {
       text = current.format('YYYY-MM-DD HH:mm:ss.SSS');
     } else {
       text = current.format('YYYY-MM-DD HH:mm:ss.SSSSSS');

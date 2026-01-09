@@ -15,35 +15,11 @@
   <body>
     <canvas id="time-axis" class="time-axis" />
     <script type="module">
-      import {
-        TimeAxis,
-        PreciseDate,
-        MarkLineDay1,
-        MarkLineHour1,
-        MarkLineMinutes10,
-        MarkLineMinute1,
-        MarkLineSeconds10,
-        MarkLineSecond1,
-        MarkLineMillseconds100,
-        MarkLineMillseconds10,
-        MarkLineMillsecond1,
-        PointerIndicator,
-      } from './src';
+      import { TimeAxis, PreciseDate, PointerIndicator, presetMarkLines } from './src';
       const timeAxis = new TimeAxis(document.querySelector('#time-axis'));
-      timeAxis
-        .use(MarkLineDay1)
-        .use(MarkLineHour1)
-        .use(MarkLineMinutes10)
-        .use(MarkLineMinute1)
-        .use(MarkLineSeconds10)
-        .use(MarkLineSecond1)
-        .use(MarkLineMillseconds100)
-        .use(MarkLineMillseconds10)
-        .use(MarkLineMillsecond1);
-
-      timeAxis.date = new PreciseDate(new Date().valueOf());
+      timeAxis.use(presetMarkLines);
+      timeAxis.adaptiveByDateRange(new PreciseDate(Date.now()), new PreciseDate(Date.now() + 1000 * 60 * 60 * 120));
       timeAxis.render();
-
       const pointerIndicator = new PointerIndicator(timeAxis);
     </script>
   </body>

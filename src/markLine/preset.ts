@@ -1,45 +1,7 @@
-/* eslint-disable max-classes-per-file */
-import type { TimeAxis } from './TimeAxis';
-import type { PreciseDate } from './PreciseDate';
-import { DAY, HOUR, MILLISECOND, MINUTE, SECOND } from './utils';
+import type { PreciseDate } from '../PreciseDate';
+import { DAY, HOUR, MILLISECOND, MINUTE, SECOND } from '../utils';
 
-export abstract class MarkLine {
-  static SMALL = 12;
-
-  static MIDDLE = 20;
-
-  static LARGE = 36;
-
-  timeAxis: TimeAxis;
-
-  /** 每一刻度线代表的时长, 单位: 毫秒 */
-  abstract base: number;
-
-  constructor(timeAxis: TimeAxis) {
-    this.timeAxis = timeAxis;
-  }
-
-  get spacing() {
-    return this.timeAxis.spacing;
-  }
-
-  drawMarkLine(x: number, y: number, length: number) {
-    this.timeAxis.context.strokeStyle = this.timeAxis.theme.axis.tickColor;
-    const context = this.timeAxis.context;
-    context.beginPath();
-    context.moveTo(x, this.timeAxis.baseline + y);
-    context.lineTo(x, this.timeAxis.baseline + y + length);
-    context.stroke();
-  }
-
-  fillText(text: string, x: number, y: 'top' | 'bottom' | number) {
-    this.timeAxis.context.fillStyle = this.timeAxis.theme.axis.labelColor;
-    const posY = typeof y === 'number' ? y : y === 'top' ? -8 : MarkLine.LARGE + 12;
-    this.timeAxis.context.fillText(text, x, this.timeAxis.baseline + posY);
-  }
-
-  abstract draw(x: number, current: PreciseDate): void;
-}
+import { MarkLine } from './MarkLine';
 
 /** 1 day */
 export class MarkLineDay1 extends MarkLine {
@@ -253,3 +215,15 @@ export class MarkLineMillsecond1 extends MarkLine {
     }
   }
 }
+
+export const presetMarkLines = [
+  MarkLineDay1,
+  MarkLineHour1,
+  MarkLineMinutes10,
+  MarkLineMinute1,
+  MarkLineSeconds10,
+  MarkLineSecond1,
+  MarkLineMillseconds100,
+  MarkLineMillseconds10,
+  MarkLineMillsecond1,
+];
