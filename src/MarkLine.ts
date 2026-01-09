@@ -1,16 +1,19 @@
+/* eslint-disable max-classes-per-file */
 import type { TimeAxis } from './TimeAxis';
 import type { PreciseDate } from './PreciseDate';
 import { DAY, HOUR, MILLISECOND, MINUTE, SECOND } from './utils';
 
 export abstract class MarkLine {
   static SMALL = 12;
+
   static MIDDLE = 20;
+
   static LARGE = 36;
+
   timeAxis: TimeAxis;
 
   /** 每一刻度线代表的时长, 单位: 毫秒 */
   abstract base: number;
-  abstract draw(x: number, current: PreciseDate): void;
 
   constructor(timeAxis: TimeAxis) {
     this.timeAxis = timeAxis;
@@ -21,6 +24,7 @@ export abstract class MarkLine {
   }
 
   drawMarkLine(x: number, y: number, length: number) {
+    this.timeAxis.context.strokeStyle = this.timeAxis.theme.axis.tickColor;
     const context = this.timeAxis.context;
     context.beginPath();
     context.moveTo(x, this.timeAxis.baseline + y);
@@ -28,9 +32,13 @@ export abstract class MarkLine {
     context.stroke();
   }
 
-  fillText(text: string, x: number, y: number) {
-    this.timeAxis.context.fillText(text, x, this.timeAxis.baseline + y);
+  fillText(text: string, x: number, y: 'top' | 'bottom' | number) {
+    this.timeAxis.context.fillStyle = this.timeAxis.theme.axis.labelColor;
+    const posY = typeof y === 'number' ? y : y === 'top' ? -8 : MarkLine.LARGE + 12;
+    this.timeAxis.context.fillText(text, x, this.timeAxis.baseline + posY);
   }
+
+  abstract draw(x: number, current: PreciseDate): void;
 }
 
 /** 1 day */
@@ -42,7 +50,7 @@ export class MarkLineDay1 extends MarkLine {
     const day = current.get('dates');
     if (day === 1) {
       if (this.spacing > 4 || current.get('months') % 3 === 0) {
-        this.fillText(current.format('YYYY-MM'), x, -8);
+        this.fillText(current.format('YYYY-MM'), x, 'top');
         this.drawMarkLine(x, -4, MarkLine.LARGE);
       } else {
         this.drawMarkLine(x, 0, MarkLine.LARGE - 4);
@@ -58,7 +66,7 @@ export class MarkLineDay1 extends MarkLine {
       (this.spacing > 6 && (day === 1 || day === 10 || day === 20)) ||
       day === 1
     ) {
-      this.fillText(current.format('MM-DD'), x, 48);
+      this.fillText(current.format('MM-DD'), x, 'bottom');
     }
   }
 }
@@ -72,7 +80,7 @@ export class MarkLineHour1 extends MarkLine {
 
     if (current.isDivisibleBy(DAY)) {
       if (spacing > 6 || current.get('dates') % 2 === 1) {
-        this.fillText(current.format('YYYY-MM-DD'), x, -8);
+        this.fillText(current.format('YYYY-MM-DD'), x, 'top');
         this.drawMarkLine(x, -4, MarkLine.LARGE);
       } else {
         this.drawMarkLine(x, 0, MarkLine.LARGE - 4);
@@ -84,7 +92,7 @@ export class MarkLineHour1 extends MarkLine {
     }
 
     if (current.isDivisibleBy(HOUR * (spacing > 16 ? 4 : spacing > 7 ? 12 : spacing > 4 ? 24 : 48))) {
-      this.fillText(current.format('HH:mm:ss'), x, 48);
+      this.fillText(current.format('HH:mm:ss'), x, 'bottom');
     }
   }
 }
@@ -95,7 +103,7 @@ export class MarkLineMinutes10 extends MarkLine {
 
   draw(x: number, current: PreciseDate): void {
     if (current.isDivisibleBy(HOUR * 12)) {
-      this.fillText(current.format('YYYY-MM-DD'), x, -8);
+      this.fillText(current.format('YYYY-MM-DD'), x, 'top');
       this.drawMarkLine(x, -4, MarkLine.LARGE);
     } else if (current.isDivisibleBy(HOUR)) {
       this.drawMarkLine(x, 0, MarkLine.MIDDLE);
@@ -104,7 +112,7 @@ export class MarkLineMinutes10 extends MarkLine {
     }
 
     if (current.isDivisibleBy(HOUR * (this.spacing > 12 ? 1 : 6))) {
-      this.fillText(current.format('HH:mm:ss'), x, 48);
+      this.fillText(current.format('HH:mm:ss'), x, 'bottom');
     }
   }
 }
@@ -117,7 +125,7 @@ export class MarkLineMinute1 extends MarkLine {
     const spacing = this.spacing;
 
     if (current.isDivisibleBy(MINUTE * (spacing >= 6 ? 30 : 60))) {
-      this.fillText(current.format('YYYY-MM-DD'), x, -8);
+      this.fillText(current.format('YYYY-MM-DD'), x, 'top');
       this.drawMarkLine(x, -4, MarkLine.LARGE);
     } else if (current.isDivisibleBy(MINUTE * 10)) {
       this.drawMarkLine(x, 0, MarkLine.MIDDLE);
@@ -126,7 +134,7 @@ export class MarkLineMinute1 extends MarkLine {
     }
 
     if (spacing >= 4 && current.isDivisibleBy(MINUTE * (spacing > 8 ? 10 : 30))) {
-      this.fillText(current.format('HH:mm:ss'), x, 48);
+      this.fillText(current.format('HH:mm:ss'), x, 'bottom');
     }
   }
 }
@@ -137,7 +145,7 @@ export class MarkLineSeconds10 extends MarkLine {
 
   draw(x: number, current: PreciseDate): void {
     if (current.isDivisibleBy(MINUTE * 10)) {
-      this.fillText(current.format('YYYY-MM-DD'), x, -8);
+      this.fillText(current.format('YYYY-MM-DD'), x, 'top');
       this.drawMarkLine(x, -4, MarkLine.LARGE);
     } else if (current.isDivisibleBy(MINUTE)) {
       this.drawMarkLine(x, 0, MarkLine.MIDDLE);
@@ -146,7 +154,7 @@ export class MarkLineSeconds10 extends MarkLine {
     }
 
     if (current.isDivisibleBy(MINUTE * (this.spacing > 12 ? 1 : 5))) {
-      this.fillText(current.format('HH:mm:ss'), x, 48);
+      this.fillText(current.format('HH:mm:ss'), x, 'bottom');
     }
   }
 }
@@ -157,7 +165,7 @@ export class MarkLineSecond1 extends MarkLine {
 
   draw(x: number, current: PreciseDate): void {
     if (current.isDivisibleBy(MINUTE)) {
-      this.fillText(current.format('YYYY-MM-DD'), x, -8);
+      this.fillText(current.format('YYYY-MM-DD'), x, 'top');
       this.drawMarkLine(x, -4, MarkLine.LARGE);
     } else if (current.isDivisibleBy(SECOND * 10)) {
       this.drawMarkLine(x, 0, MarkLine.MIDDLE);
@@ -166,7 +174,7 @@ export class MarkLineSecond1 extends MarkLine {
     }
 
     if (current.isDivisibleBy(SECOND * (this.spacing > 8 ? 10 : 30))) {
-      this.fillText(current.format('HH:mm:ss'), x, 48);
+      this.fillText(current.format('HH:mm:ss'), x, 'bottom');
     }
   }
 }
@@ -179,7 +187,7 @@ export class MarkLineMillseconds100 extends MarkLine {
     const spacing = this.spacing;
     if (current.isDivisibleBy(MILLISECOND * 1000)) {
       if (spacing > 22 || current.isDivisibleBy(MILLISECOND * 5000)) {
-        this.fillText(current.format('YYYY-MM-DD HH:mm:ss'), x, -8);
+        this.fillText(current.format('YYYY-MM-DD HH:mm:ss'), x, 'top');
         this.drawMarkLine(x, -4, MarkLine.LARGE);
       } else {
         this.drawMarkLine(x, 0, MarkLine.LARGE - 4);
@@ -191,7 +199,7 @@ export class MarkLineMillseconds100 extends MarkLine {
     }
 
     if (current.isDivisibleBy(MILLISECOND * (spacing > 22 ? 500 : spacing > 10 ? 1000 : 2000))) {
-      this.fillText(current.format('HH:mm:ss.SSS'), x, 48);
+      this.fillText(current.format('HH:mm:ss.SSS'), x, 'bottom');
     }
   }
 }
@@ -204,7 +212,7 @@ export class MarkLineMillseconds10 extends MarkLine {
     const spacing = this.spacing;
     if (current.isDivisibleBy(MILLISECOND * 100)) {
       if (spacing > 22 || current.isDivisibleBy(MILLISECOND * 500)) {
-        this.fillText(current.format('YYYY-MM-DD HH:mm:ss'), x, -8);
+        this.fillText(current.format('YYYY-MM-DD HH:mm:ss'), x, 'top');
         this.drawMarkLine(x, -4, MarkLine.LARGE);
       } else {
         this.drawMarkLine(x, 0, MarkLine.LARGE - 4);
@@ -216,7 +224,7 @@ export class MarkLineMillseconds10 extends MarkLine {
     }
 
     if (current.isDivisibleBy(MILLISECOND * (spacing > 22 ? 50 : spacing > 10 ? 100 : 200))) {
-      this.fillText(current.format('HH:mm:ss.SSS'), x, 48);
+      this.fillText(current.format('HH:mm:ss.SSS'), x, 'bottom');
     }
   }
 }
@@ -229,7 +237,7 @@ export class MarkLineMillsecond1 extends MarkLine {
     const spacing = this.spacing;
     if (current.isDivisibleBy(MILLISECOND * 10)) {
       if (spacing > 22 || current.isDivisibleBy(MILLISECOND * 50)) {
-        this.fillText(current.format('YYYY-MM-DD HH:mm:ss'), x, -8);
+        this.fillText(current.format('YYYY-MM-DD HH:mm:ss'), x, 'top');
         this.drawMarkLine(x, -4, MarkLine.LARGE);
       } else {
         this.drawMarkLine(x, 0, MarkLine.LARGE - 4);
@@ -241,7 +249,7 @@ export class MarkLineMillsecond1 extends MarkLine {
     }
 
     if (current.isDivisibleBy(MILLISECOND * (spacing > 22 ? 5 : spacing > 10 ? 10 : 20))) {
-      this.fillText(current.format('HH:mm:ss.SSS'), x, 48);
+      this.fillText(current.format('HH:mm:ss.SSS'), x, 'bottom');
     }
   }
 }

@@ -8,8 +8,8 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "build": "tsc --noEmit && vite build",
+    "format": "prettier -w \"**/*\" -u"
   },
   "repository": {
     "type": "git",
@@ -28,12 +28,13 @@
   },
   "homepage": "https://github.com/xunmi1/time-axis#readme",
   "dependencies": {
-    "dayjs": "^1.11.13"
+    "dayjs": "^1.11.9"
   },
   "devDependencies": {
     "@xunmi/prettier-config": "^1.0.2",
-    "prettier": "^3.3.3",
-    "typescript": "~5.6.3",
-    "vite": "^5.4.8"
-  }
+    "prettier": "^3.7.4",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.1"
+  },
+  "prettier": "@xunmi/prettier-config"
 }

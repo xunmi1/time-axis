@@ -4,15 +4,13 @@ import { MINUTE, round } from './utils';
 
 export class PreciseDate {
   #value: Dayjs;
+
   #decimal = 0;
 
-  constructor(input: number) {
-    this.#value = dayjs(input);
-    this.#decimal = input - this.#value.valueOf();
-  }
-
-  static from(date: { valueOf: () => number }, decimal = 0) {
-    return new PreciseDate(date.valueOf() + decimal);
+  constructor(input: { valueOf: () => number }) {
+    const value = input.valueOf();
+    this.#value = dayjs(value);
+    this.#decimal = value - this.#value.valueOf();
   }
 
   valueOf() {

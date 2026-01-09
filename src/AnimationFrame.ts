@@ -1,30 +1,43 @@
 export interface AnimationFrameCallback {
-  (pause: AnimationFrame['pause'], gap: number): void;
+  (this: AnimationFrame, pause: AnimationFrame['pause'], gap: number): void;
 }
 
 export class AnimationFrame {
   #callback?: AnimationFrameCallback;
-  #timestamp: number | undefined;
-  #frameId: number | undefined;
 
-  #handler: FrameRequestCallback = timestamp => {
-    const gap = this.#timestamp == null ? 0 : timestamp - this.#timestamp;
-    this.#timestamp = timestamp;
-    this.#frameId = window.requestAnimationFrame(this.#handler);
-    this.#callback?.(this.pause.bind(this), gap);
-  };
+  #timeStamp?: number;
+
+  #frameId?: number;
+
+  get isActive() {
+    return this.#frameId != null;
+  }
 
   resume(callback: AnimationFrameCallback) {
-    this.pause();
     this.#callback = callback;
-    this.#frameId = window.requestAnimationFrame(this.#handler);
+    if (!this.isActive) this.#request();
   }
 
   pause() {
-    if (!this.#frameId) return;
+    this.#cancel();
+    this.#callback = undefined;
+  }
+
+  #handler: FrameRequestCallback = timeStamp => {
+    const gap = this.#timeStamp == null ? 0 : timeStamp - this.#timeStamp;
+    this.#timeStamp = timeStamp;
+    this.#request();
+    this.#callback?.(this.pause.bind(this), gap);
+  };
+
+  #request() {
+    this.#frameId = window.requestAnimationFrame(this.#handler);
+  }
+
+  #cancel() {
+    if (this.#frameId == null) return;
     window.cancelAnimationFrame(this.#frameId);
     this.#frameId = undefined;
-    this.#timestamp = undefined;
-    this.#callback = undefined;
+    this.#timeStamp = undefined;
   }
 }

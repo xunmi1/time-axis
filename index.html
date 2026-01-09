@@ -27,6 +27,7 @@
         MarkLineMillseconds100,
         MarkLineMillseconds10,
         MarkLineMillsecond1,
+        PointerIndicator,
       } from './src';
       const timeAxis = new TimeAxis(document.querySelector('#time-axis'));
       timeAxis
@@ -42,6 +43,8 @@
 
       timeAxis.date = new PreciseDate(new Date().valueOf());
       timeAxis.render();
+
+      const pointerIndicator = new PointerIndicator(timeAxis);
     </script>
   </body>
 </html>

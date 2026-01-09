@@ -1,40 +1,42 @@
+import type { PreciseDate } from './PreciseDate';
 import type { TimeAxis } from './TimeAxis';
 import { MILLISECOND, SECOND } from './utils';
+
+declare module './theme' {
+  export interface Theme {
+    indicator: {
+      font?: string;
+      backgroundColor: string;
+      lineColor: string;
+      labelColor: string;
+    };
+  }
+}
 
 /** 指示器 */
 export class Indicator {
   timeAxis: TimeAxis;
 
+  date: PreciseDate | undefined;
+
   #offsetX = 0;
-  #enabled = false;
+
+  textBoxTop = 48;
 
   constructor(timeAxis: TimeAxis) {
     this.timeAxis = timeAxis;
-    this.timeAxis.addEventListener('mousemove', this.#onMove);
-    this.timeAxis.addEventListener('mouseleave', this.#onLeave);
-    this.timeAxis.onDrawn(() => this.draw());
+    this.timeAxis.on('drawn', () => this.#draw());
+    this.timeAxis.on('destroyed', () => this.destroy());
   }
 
-  destroy() {
-    this.#enabled = false;
+  get theme() {
+    return this.timeAxis.theme.indicator;
   }
 
-  #onMove = (event: MouseEvent) => {
-    this.#enabled = true;
-    this.#offsetX = event.offsetX;
-    // 执行渲染，间接调用 this.draw()
-    this.timeAxis.render();
-  };
-
-  #onLeave = () => {
-    this.#enabled = false;
-    this.timeAxis.render();
-  };
-
-  draw() {
-    if (!this.#enabled) return;
+  #draw() {
+    if (this.date == null) return;
     const context = this.timeAxis.context;
-
+    this.#offsetX = this.timeAxis.getPosByDate(this.date);
     context.save();
     this.#drawLine();
     context.restore();
@@ -44,13 +46,23 @@ export class Indicator {
     context.restore();
   }
 
+  destroy() {
+    this.date = undefined;
+  }
+
+  render() {
+    // 执行渲染，间接调用 this.draw()
+    this.timeAxis.render();
+  }
+
   #drawLine() {
     const context = this.timeAxis.context;
     const offsetX = this.#offsetX;
 
     const bottom = this.timeAxis.height;
-    context.strokeStyle = '#1077f5';
-    context.fillStyle = '#1077f5';
+    const lineColor = this.theme.lineColor;
+    context.strokeStyle = lineColor;
+    context.fillStyle = lineColor;
     context.lineWidth = 1;
 
     context.beginPath();
@@ -76,7 +88,7 @@ export class Indicator {
   #drawTextBox() {
     const context = this.timeAxis.context;
     const offsetX = this.#offsetX;
-    const bottom = this.timeAxis.baseline + 48;
+    const bottom = this.timeAxis.baseline + this.textBoxTop;
     const boundStart = 0;
     const boundEnd = this.timeAxis.width;
 
@@ -90,17 +102,18 @@ export class Indicator {
       text = current.format('YYYY-MM-DD HH:mm:ss.SSSSSS');
     }
     // 需先设置字体，才能准确计算出文字尺寸
-    context.font = '12px system-ui';
+    context.font = this.theme.font ?? this.timeAxis.theme.font;
     const textMetrics = context.measureText(text);
     // 四周额外增加 4px 的边距
     const padding = 4;
+    const theme = this.theme;
     const boxWidth = textMetrics.width + padding * 2;
     const boxHeight = textMetrics.fontBoundingBoxAscent + textMetrics.fontBoundingBoxDescent + padding * 2;
     const boxPosX = Math.min(Math.max(offsetX - boxWidth / 2, boundStart), boundEnd - boxWidth);
-    context.fillStyle = '#1077f5';
+    context.fillStyle = theme.backgroundColor;
     context.fillRect(boxPosX, bottom - textMetrics.fontBoundingBoxAscent - padding, boxWidth, boxHeight);
 
-    context.fillStyle = '#fff';
+    context.fillStyle = theme.labelColor;
     context.textAlign = 'left';
     context.fillText(text, boxPosX + padding, bottom);
   }
