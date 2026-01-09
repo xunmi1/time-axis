@@ -15,12 +15,14 @@
   <body>
     <canvas id="time-axis" class="time-axis" />
     <script type="module">
-      import { TimeAxis, PreciseDate, PointerIndicator, presetMarkLines } from './src';
+      import { TimeAxis, PreciseDate, PointerIndicator, presetMarkLines, MarkScale } from './src';
       const timeAxis = new TimeAxis(document.querySelector('#time-axis'));
       timeAxis.use(presetMarkLines);
       timeAxis.adaptiveByDateRange(new PreciseDate(Date.now()), new PreciseDate(Date.now() + 1000 * 60 * 60 * 120));
+      new PointerIndicator(timeAxis);
+      new MarkScale(timeAxis);
+
       timeAxis.render();
-      const pointerIndicator = new PointerIndicator(timeAxis);
     </script>
   </body>
 </html>

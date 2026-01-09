@@ -25,7 +25,8 @@ export class Indicator {
 
   constructor(timeAxis: TimeAxis) {
     this.timeAxis = timeAxis;
-    this.timeAxis.on('drawn', () => this.draw());
+    this.draw = this.draw.bind(this);
+    this.timeAxis.on('drawn', this.draw);
     this.timeAxis.on('destroyed', () => this.destroy());
   }
 
@@ -48,6 +49,7 @@ export class Indicator {
 
   destroy() {
     this.date = undefined;
+    this.timeAxis.off('drawn', this.draw);
   }
 
   render() {

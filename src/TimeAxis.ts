@@ -235,5 +235,7 @@ export class TimeAxis {
     context.textAlign = 'center';
     context.lineWidth = 1;
     context.font = this.theme.font;
+    context.fillStyle = this.theme.textColor;
+    context.strokeStyle = this.theme.textColor;
   }
 }

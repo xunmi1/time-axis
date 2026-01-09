@@ -27,7 +27,8 @@ export class MarkLineController {
 
   use(Plugin: MaybeArray<new (arg: TimeAxis) => MarkLine>) {
     const Plugins = Array.isArray(Plugin) ? Plugin : [Plugin];
-    this.#markLines.push(...Plugins.map(Ctor => new Ctor(this.timeAxis)));
+    const instances = Plugins.map(Ctor => new Ctor(this.timeAxis));
+    this.#markLines = this.#markLines.concat(instances).toSorted((a, b) => b.base - a.base);
     return this;
   }
 
@@ -52,7 +53,7 @@ export class MarkLineController {
       const duration = (width / spacing) * markLine.base;
       return difference <= duration || i === 0;
     });
-    this.spacing = Math.max(Math.floor(width * ratio) / (difference / this.markLine!.base), SPACING_MIN);
+    this.spacing = Math.floor(width * ratio) / (difference / this.markLine!.base);
   }
 
   canScale(ratio: number) {
@@ -79,32 +80,14 @@ export class MarkLineController {
   }
 
   updateByScale(ratio: number) {
-    const spacing = this.spacing * ratio;
     const current = this.markLine!;
-    const index = this.#markLines.indexOf(current!);
+    const spacing = this.spacing * ratio;
     // 时间轴切换的基础阈值
-    const threshold = 4;
-    // 放大, 使用精度更高的时间轴
-    if (ratio > 1) {
-      const next = this.#markLines[index + 1];
-      const markLineRatio = next ? current.base / next.base : undefined;
-      if (markLineRatio != null && spacing >= markLineRatio * threshold) {
-        this.spacing = spacing / markLineRatio;
-        this.markLine = next;
-      } else {
-        this.spacing = spacing;
-      }
-    } else {
-      // 缩小, 使用精度更低的时间轴
-      const prev = this.#markLines[index - 1];
-      const markLineRatio = prev ? current.base / prev.base : undefined;
-      if (markLineRatio != null && spacing < threshold) {
-        this.spacing = spacing * markLineRatio;
-        this.markLine = prev;
-      } else {
-        this.spacing = spacing;
-      }
-    }
+    const threshold = 2;
+    const unit = (current.base * threshold) / spacing;
+    const next = this.#markLines.findLast(v => v.base >= unit);
+    this.markLine = next ?? current;
+    this.spacing = spacing / (current.base / this.markLine.base);
   }
 
   /** 起始刻度的时间 */
