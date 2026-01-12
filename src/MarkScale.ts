@@ -1,16 +1,16 @@
 import type { TimeAxis } from './TimeAxis';
-import { DAY, HOUR, MINUTE, SECOND } from './utils';
+import { DAY, HOUR, MINUTE, SECOND, bound } from './utils';
 
 /** 比例尺 */
 export class MarkScale {
   timeAxis: TimeAxis;
 
-  width = 80;
+  width = 72;
   bottom = 8;
+  right = 2;
 
   constructor(timeAxis: TimeAxis) {
     this.timeAxis = timeAxis;
-    this.draw = this.draw.bind(this);
     this.timeAxis.on('drawn', this.draw);
   }
 
@@ -27,22 +27,28 @@ export class MarkScale {
     return `${unit} ms`;
   }
 
+  @bound
   draw() {
     const timeAxis = this.timeAxis;
     const context = this.timeAxis.context;
     const width = this.width;
+    const right = this.right;
     const bottom = this.bottom;
     context.save();
     context.beginPath();
     const tickHeight = 6;
-    context.moveTo(timeAxis.width - width, timeAxis.height - bottom - tickHeight);
-    context.lineTo(timeAxis.width - width, timeAxis.height - bottom);
-    context.lineTo(timeAxis.width, timeAxis.height - bottom);
-    context.lineTo(timeAxis.width, timeAxis.height - bottom - tickHeight);
+    const startX = timeAxis.width - width - right;
+    const endX = timeAxis.width - right;
+    const startY = timeAxis.height - bottom - tickHeight;
+    const endY = timeAxis.height - bottom;
+    context.moveTo(startX, startY);
+    context.lineTo(startX, endY);
+    context.lineTo(endX, endY);
+    context.lineTo(endX, startY);
     context.stroke();
     context.textAlign = 'center';
     context.font = this.timeAxis.theme.font;
-    context.fillText(this.displayText, timeAxis.width - width / 2, timeAxis.height - bottom - tickHeight);
+    context.fillText(this.displayText, startX + width / 2, startY);
     context.restore();
   }
 }

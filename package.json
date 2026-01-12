@@ -6,6 +6,12 @@
   "files": [
     "dist"
   ],
+  "module": "./dist/time-axis.js",
+  "exports": {
+    ".": {
+      "import": "./dist/time-axis.js"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -32,6 +38,7 @@
   },
   "devDependencies": {
     "@xunmi/prettier-config": "^1.0.2",
+    "@types/node": "^22.19.3",
     "prettier": "^3.7.4",
     "typescript": "~5.9.3",
     "vite": "^7.3.1"

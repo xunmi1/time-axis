@@ -29,3 +29,18 @@ export function round(value: number, digits = 0) {
     .toString()
     .padStart(digits, '0');
 }
+
+/** Bind method to `this` (class method decorator) */
+export function bound<This, Args extends unknown[], Return>(
+  method: (this: This, ...args: Args) => Return,
+  ctx: ClassMethodDecoratorContext<This, (this: This, ...args: Args) => Return>
+) {
+  const methodName = ctx.name;
+  if (ctx.static || ctx.kind !== 'method') {
+    throw new TypeError(`Cannot bound ${ctx.kind} ${String(methodName)}`);
+  }
+  ctx.addInitializer(function () {
+    // @ts-expect-error
+    this[methodName] = method.bind(this);
+  });
+}

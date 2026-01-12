@@ -1,6 +1,6 @@
 import type { PreciseDate } from './PreciseDate';
 import type { TimeAxis } from './TimeAxis';
-import { MILLISECOND, SECOND } from './utils';
+import { bound, MILLISECOND, SECOND } from './utils';
 
 declare module './theme' {
   export interface Theme {
@@ -25,15 +25,15 @@ export class Indicator {
 
   constructor(timeAxis: TimeAxis) {
     this.timeAxis = timeAxis;
-    this.draw = this.draw.bind(this);
     this.timeAxis.on('drawn', this.draw);
-    this.timeAxis.on('destroyed', () => this.destroy());
+    this.timeAxis.on('destroyed', this.destroy);
   }
 
   get theme() {
     return this.timeAxis.theme.indicator;
   }
 
+  @bound
   draw() {
     if (this.date == null) return;
     this.#offsetX = this.timeAxis.getPosByDate(this.date);
@@ -47,6 +47,7 @@ export class Indicator {
     context.restore();
   }
 
+  @bound
   destroy() {
     this.date = undefined;
     this.timeAxis.off('drawn', this.draw);

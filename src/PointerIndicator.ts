@@ -1,5 +1,6 @@
 import type { TimeAxis } from './TimeAxis';
 import { Indicator } from './Indicator';
+import { bound } from './utils';
 
 declare module './theme' {
   export interface Theme {
@@ -18,26 +19,30 @@ export class PointerIndicator extends Indicator {
 
   constructor(timeAxis: TimeAxis) {
     super(timeAxis);
-    timeAxis.onNative('pointermove', this.#onMove, { passive: true });
-    timeAxis.onNative('pointerleave', this.#onLeave, { passive: true });
-    timeAxis.on('beforeDraw', this.#updateDate);
+
+    timeAxis.onNative('pointermove', this.onMove, { passive: true });
+    timeAxis.onNative('pointerleave', this.onLeave, { passive: true });
+    timeAxis.on('beforeDraw', this.updateDate);
   }
 
   override get theme() {
     return this.timeAxis.theme.pointerIndicator ?? super.theme;
   }
 
-  #updateDate = () => {
+  @bound
+  updateDate() {
     this.date = this.x == null ? undefined : this.timeAxis.getDateByPos(this.x);
-  };
+  }
 
-  #onMove = (event: PointerEvent) => {
+  @bound
+  onMove(event: PointerEvent) {
     this.x = event.offsetX;
     this.render();
-  };
+  }
 
-  #onLeave = () => {
+  @bound
+  onLeave() {
     this.x = undefined;
     this.render();
-  };
+  }
 }
