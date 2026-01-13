@@ -4,7 +4,7 @@ import { MarkLineController } from './markLine';
 import { PreciseDate } from './PreciseDate';
 
 import { defaultTheme, type Theme } from './theme';
-import { withResolvers } from './utils';
+import { bound, withResolvers } from './utils';
 
 interface Events extends ListenerMap {
   /** 当每帧渲染前 */
@@ -80,6 +80,10 @@ export class TimeAxis {
     this.context.canvas.addEventListener(type, listener, { signal, ...options });
   }
 
+  offNative<K extends keyof HTMLElementEventMap>(type: K, listener: (ev: HTMLElementEventMap[K]) => void) {
+    this.context.canvas.removeEventListener(type, listener);
+  }
+
   destroy() {
     this.clear();
     this.#animationFrame.pause();
@@ -129,7 +133,7 @@ export class TimeAxis {
     if (!this.canScale(ratio)) return;
     // 调整间隔和时间, 实现缩放
     this.date = this.getDateByPos(x - x / ratio);
-    this.#markLineController.updateByScale(ratio);
+    this.#markLineController.scale(ratio);
     this.#draw();
   }
 
@@ -211,11 +215,12 @@ export class TimeAxis {
     this.#emitter.emit('drawn');
   }
 
-  #onWheel = (event: WheelEvent) => {
+  @bound
+  #onWheel(event: WheelEvent) {
     event.preventDefault();
     if (event.ctrlKey) this.scaleWithAnimation(event.deltaY < 0 ? 1.25 : 0.8, event.offsetX);
     else this.moveWithAnimation(event.deltaY);
-  };
+  }
 
   #drawAxisLine() {
     const context = this.context;

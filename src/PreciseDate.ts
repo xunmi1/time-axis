@@ -1,5 +1,4 @@
-import dayjs from 'dayjs';
-import type { Dayjs, UnitType } from 'dayjs';
+import dayjs, { type Dayjs, type UnitType } from 'dayjs';
 import { MINUTE, round } from './utils';
 
 export class PreciseDate {
@@ -24,7 +23,7 @@ export class PreciseDate {
   format(template: string) {
     const decimal = this.#decimal;
     // `dayjs` 不支持超过三个 `S` 字符, 其代表比毫秒更低的单位, 需要进行补充
-    return this.#value.format(template.replace(/(?<=S{3})(S+)/g, match => round(decimal, match.length)));
+    return this.#value.format(template.replaceAll(/(?<=S{3})S+/g, match => round(decimal, match.length)));
   }
 
   get(unit: UnitType) {
@@ -37,5 +36,10 @@ export class PreciseDate {
 
   isDivisibleBy(divisor: number) {
     return (this.valueOf() + this.utcOffset()) % divisor === 0;
+  }
+
+  endOf(value: number) {
+    const offset = this.utcOffset();
+    return new PreciseDate(Math.ceil((this.valueOf() + offset) / value) * value - offset);
   }
 }

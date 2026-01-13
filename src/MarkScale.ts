@@ -14,6 +14,10 @@ export class MarkScale {
     this.timeAxis.on('drawn', this.draw);
   }
 
+  destroy() {
+    this.timeAxis.off('drawn', this.draw);
+  }
+
   get base() {
     return this.timeAxis.markLine!.base;
   }

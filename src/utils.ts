@@ -30,6 +30,14 @@ export function round(value: number, digits = 0) {
     .padStart(digits, '0');
 }
 
+export function inRange(value: number, min: number, max: number) {
+  return value >= min && value <= max;
+}
+
+export function clamp(value: number, min: number, max: number) {
+  return value < min ? min : value > max ? max : value;
+}
+
 /** Bind method to `this` (class method decorator) */
 export function bound<This, Args extends unknown[], Return>(
   method: (this: This, ...args: Args) => Return,
@@ -37,10 +45,22 @@ export function bound<This, Args extends unknown[], Return>(
 ) {
   const methodName = ctx.name;
   if (ctx.static || ctx.kind !== 'method') {
-    throw new TypeError(`Cannot bound ${ctx.kind} ${String(methodName)}`);
+    throw new TypeError(`Cannot bound ${ctx.kind} '${String(methodName)}'`);
   }
-  ctx.addInitializer(function () {
-    // @ts-expect-error
-    this[methodName] = method.bind(this);
-  });
+  if (ctx.metadata[methodName]) return;
+  ctx.metadata[methodName] = true;
+
+  if (ctx.private) {
+    ctx.addInitializer(function () {
+      ctx.metadata.instance ??= this;
+    });
+    return function (...args: Args) {
+      return method.call(ctx.metadata.instance as This, ...args);
+    };
+  } else {
+    ctx.addInitializer(function () {
+      // @ts-expect-error
+      this[methodName] = method.bind(this);
+    });
+  }
 }

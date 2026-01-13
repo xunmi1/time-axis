@@ -79,7 +79,7 @@ export class MarkLineController {
     context.restore();
   }
 
-  updateByScale(ratio: number) {
+  scale(ratio: number) {
     const current = this.markLine!;
     const spacing = this.spacing * ratio;
     // 时间轴切换的基础阈值
