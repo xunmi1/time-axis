@@ -1,6 +1,7 @@
 import { MarkLine, type MarkLinePlugin } from './MarkLine';
 import { PreciseDate } from '../PreciseDate';
 import type { TimeAxis } from '../TimeAxis';
+import { clamp, inRange } from '../utils';
 
 const SPACING_MIN = 2;
 const SPACING_MAX = 500;
@@ -41,19 +42,20 @@ export class MarkLineController {
   adaptiveByDateRange(start: PreciseDate, end: PreciseDate, ratio = 1) {
     const difference = end.valueOf() - start.valueOf();
     if (difference <= 0) {
-      this.spacing = 8;
-      this.markLine = this.#markLines[0];
-      return;
+      throw new Error('End date must be greater than start date');
     }
-
-    const width = this.timeAxis.width;
-    // 预设的间距
-    const spacing = 8 / ratio;
-    this.markLine = this.#markLines.findLast((markLine, i) => {
-      const duration = (width / spacing) * markLine.base;
-      return difference <= duration || i === 0;
-    });
-    this.spacing = Math.floor(width * ratio) / (difference / this.markLine!.base);
+    const width = this.timeAxis.width * ratio;
+    const candidates = this.#markLines.map(v => width / (difference / v.base));
+    const index = candidates.findLastIndex(v => inRange(v, SPACING_MIN, SPACING_MAX));
+    if (index < 0) {
+      // 找不到合适的时, 寻找最接近 `SPACING_MIN` 和 `SPACING_MAX` 的 `spacing`
+      const minIndex = closestIndexToBoundary(candidates, SPACING_MIN, SPACING_MAX);
+      this.markLine = this.#markLines.at(minIndex)!;
+      this.spacing = clamp(candidates.at(minIndex)!, SPACING_MIN, SPACING_MAX);
+    } else {
+      this.markLine = this.#markLines.at(index);
+      this.spacing = candidates.at(index)!;
+    }
   }
 
   canScale(ratio: number) {
@@ -65,7 +67,8 @@ export class MarkLineController {
     if (!markLine) return;
     const spacing = this.spacing;
     const context = this.timeAxis.context;
-    const startDate = this.#getStartDate();
+    // 起始刻度的时间
+    const startDate = this.timeAxis.date.endOf(this.markLine!.base);
     const offset = this.timeAxis.getPosByDate(startDate);
 
     context.save();
@@ -89,13 +92,9 @@ export class MarkLineController {
     this.markLine = next ?? current;
     this.spacing = spacing / (current.base / this.markLine.base);
   }
+}
 
-  /** 起始刻度的时间 */
-  #getStartDate() {
-    const date = this.timeAxis.date;
-    const base = this.markLine!.base;
-    // 需要规避时区的影响
-    const offset = date.utcOffset();
-    return new PreciseDate(Math.ceil((date.valueOf() + offset) / base) * base - offset);
-  }
+function closestIndexToBoundary(values: number[], min: number, max: number) {
+  const distances = values.map(v => Math.min(Math.abs(v - min), Math.abs(v - max)));
+  return distances.indexOf(Math.min(...distances));
 }
