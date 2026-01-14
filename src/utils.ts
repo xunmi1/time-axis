@@ -30,11 +30,13 @@ export function round(value: number, digits = 0) {
     .padStart(digits, '0');
 }
 
-export function inRange(value: number, min: number, max: number) {
+type Numeric = number | bigint;
+
+export function inRange<T extends Numeric>(value: T, min: T, max: T) {
   return value >= min && value <= max;
 }
 
-export function clamp(value: number, min: number, max: number) {
+export function clamp<T extends Numeric>(value: T, min: T, max: T) {
   return value < min ? min : value > max ? max : value;
 }
 

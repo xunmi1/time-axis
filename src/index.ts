@@ -1,4 +1,4 @@
-export { PreciseDate } from './PreciseDate';
+export { PreciseDate } from './date';
 export { MarkLine, presetMarkLines, type MarkLinePlugin } from './markLine';
 export { TimeAxis } from './TimeAxis';
 export { Indicator } from './Indicator';

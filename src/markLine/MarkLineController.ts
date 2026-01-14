@@ -1,5 +1,5 @@
 import { MarkLine, type MarkLinePlugin } from './MarkLine';
-import { PreciseDate } from '../PreciseDate';
+import { PreciseDate } from '../date';
 import type { TimeAxis } from '../TimeAxis';
 import { clamp, inRange } from '../utils';
 
@@ -44,14 +44,16 @@ export class MarkLineController {
     if (difference <= 0) {
       throw new Error('End date must be greater than start date');
     }
-    const width = this.timeAxis.width * ratio;
-    const candidates = this.#markLines.map(v => width / (difference / v.base));
+    // width of 1ms
+    const width = (this.timeAxis.width * ratio * 1_000_000) / Number(difference);
+    const candidates = this.#markLines.map(v => width * v.base);
     const index = candidates.findLastIndex(v => inRange(v, SPACING_MIN, SPACING_MAX));
     if (index < 0) {
       // 找不到合适的时, 寻找最接近 `SPACING_MIN` 和 `SPACING_MAX` 的 `spacing`
       const minIndex = closestIndexToBoundary(candidates, SPACING_MIN, SPACING_MAX);
       this.markLine = this.#markLines.at(minIndex)!;
       this.spacing = clamp(candidates.at(minIndex)!, SPACING_MIN, SPACING_MAX);
+      console.warn(`Can't adaptive by date range.`);
     } else {
       this.markLine = this.#markLines.at(index);
       this.spacing = candidates.at(index)!;
@@ -75,7 +77,7 @@ export class MarkLineController {
     const total = Math.ceil(this.timeAxis.width / spacing);
     for (let index = 0; index < total; index += 1) {
       const x = offset + index * spacing;
-      const current = new PreciseDate(startDate.valueOf() + markLine.base * index);
+      const current = startDate.add(markLine.base * index, 'ms');
       markLine.draw(x, current);
     }
 

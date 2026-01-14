@@ -3,7 +3,7 @@
     "target": "ESNext",
     "module": "ESNext",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
-    "types": [],
+    "types": ["./node_modules/temporal-polyfill/global.d.ts"],
     "forceConsistentCasingInFileNames": true,
 
     /* Bundler mode */
@@ -26,6 +26,6 @@
     "skipLibCheck": true,
     "noImplicitAny": true
   },
-  "include": ["src"],
+  "include": ["src/**/*"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

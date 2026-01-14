@@ -1,7 +1,7 @@
 import { EventEmitter, type ListenerMap, type ListenerOptions } from './EventEmitter';
 import { AnimationFrame } from './AnimationFrame';
 import { MarkLineController } from './markLine';
-import { PreciseDate } from './PreciseDate';
+import { PreciseDate } from './date';
 
 import { defaultTheme, type Theme } from './theme';
 import { bound, withResolvers } from './utils';
@@ -159,12 +159,12 @@ export class TimeAxis {
   }
 
   getPosByDate(date: PreciseDate) {
-    return ((date.valueOf() - this.date.valueOf()) / this.markLine!.base) * this.spacing;
+    return (Number(date.valueOf() - this.date.valueOf()) / 1_000_000 / this.markLine!.base) * this.spacing;
   }
 
   getDateByPos(x: number) {
-    const amount = (x / this.spacing) * this.markLine!.base;
-    return new PreciseDate(this.date.valueOf() + amount);
+    const amount = (x * this.markLine!.base * 1_000_000) / this.spacing;
+    return this.date.add(Math.ceil(amount), 'ns');
   }
 
   resize() {

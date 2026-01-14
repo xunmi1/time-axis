@@ -1,6 +1,6 @@
 /* eslint-disable max-classes-per-file */
 import type { TimeAxis } from '../TimeAxis';
-import type { PreciseDate } from '../PreciseDate';
+import type { PreciseDate } from '../date';
 import { DAY, HOUR, MILLISECOND, MINUTE, SECOND } from '../utils';
 
 declare module '../theme' {

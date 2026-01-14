@@ -1,4 +1,4 @@
-import type { PreciseDate } from './PreciseDate';
+import type { PreciseDate } from './date';
 import type { TimeAxis } from './TimeAxis';
 import { bound, MILLISECOND, SECOND } from './utils';
 

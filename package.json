@@ -33,13 +33,11 @@
     "url": "https://github.com/xunmi1/time-axis/issues"
   },
   "homepage": "https://github.com/xunmi1/time-axis#readme",
-  "dependencies": {
-    "dayjs": "^1.11.9"
-  },
   "devDependencies": {
-    "@xunmi/prettier-config": "^1.0.2",
     "@types/node": "^22.19.3",
+    "@xunmi/prettier-config": "^1.0.2",
     "prettier": "^3.7.4",
+    "temporal-polyfill": "^0.3.0",
     "typescript": "~5.9.3",
     "vite": "^7.3.1"
   },
