@@ -38,6 +38,11 @@ export abstract class MarkLine implements MarkLinePlugin {
     return this.timeAxis.spacing;
   }
 
+  get increment() {
+    // millisecond -> nanosecond
+    return this.base * 1_000_000;
+  }
+
   drawMarkLine(x: number, y: number, length: number) {
     this.timeAxis.context.strokeStyle = this.timeAxis.theme.axis.tickColor;
     const context = this.timeAxis.context;

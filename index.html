@@ -18,9 +18,12 @@
       import { TimeAxis, PreciseDate, PointerIndicator, presetMarkLines, MarkScale } from './src';
       const timeAxis = new TimeAxis(document.querySelector('#time-axis'));
       timeAxis.use(presetMarkLines);
-      const now = PreciseDate.from(Date.now());
-      timeAxis.adaptiveByDateRange(now, now.add(2, 'months'));
-      new PointerIndicator(timeAxis);
+      const now = PreciseDate.from(new Date());
+      // timeAxis.date = now;
+      // timeAxis.fitByDuration(60 * 60_000);
+      timeAxis.fitByDateRange(now, now.add(1, 'hour'));
+
+      const pointerIndicator = new PointerIndicator(timeAxis);
       new MarkScale(timeAxis);
 
       timeAxis.render();

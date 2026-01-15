@@ -24,12 +24,6 @@ export function withResolvers<T>() {
   return { promise, resolve, reject };
 }
 
-export function round(value: number, digits = 0) {
-  return Math.floor(value * 10 ** digits)
-    .toString()
-    .padStart(digits, '0');
-}
-
 type Numeric = number | bigint;
 
 export function inRange<T extends Numeric>(value: T, min: T, max: T) {

@@ -1,8 +1,13 @@
 import { format } from './format';
 
 type NumberLike = { valueOf: () => number } | number;
+
 function toNanoseconds(ms: NumberLike) {
-  return BigInt(ms.valueOf()) * 1_000_000n;
+  const value = ms.valueOf();
+  if (Number.isInteger(value)) return BigInt(value) * 1_000_000n;
+  const intPart = Math.trunc(value);
+  const fracPart = value - intPart;
+  return BigInt(intPart) * 1_000_000n + BigInt(Math.trunc(fracPart * 1_000_000));
 }
 
 type UnitTypeShort = 'us' | 'ns' | 'ms' | 's' | 'm' | 'h' | 'D' | 'M' | 'y' | 'd';
@@ -75,18 +80,25 @@ export type PreciseDateInput = bigint | { valueOf: () => bigint };
 export class PreciseDate {
   #value: Temporal.ZonedDateTime;
 
-  constructor(nanoseconds: PreciseDateInput) {
-    this.#value = new Temporal.ZonedDateTime(nanoseconds.valueOf(), defaultFormat.timeZone);
+  constructor(nanoseconds: PreciseDateInput, timeZone = defaultFormat.timeZone) {
+    this.#value = new Temporal.ZonedDateTime(nanoseconds.valueOf(), timeZone);
   }
 
-  static from(dateTime: Temporal.ZonedDateTime | Temporal.Instant | NumberLike) {
-    if (dateTime instanceof Temporal.ZonedDateTime || dateTime instanceof Temporal.Instant)
+  static from(dateTime: PreciseDate | Temporal.ZonedDateTime | Temporal.Instant | NumberLike) {
+    if (dateTime instanceof PreciseDate) {
+      return new PreciseDate(dateTime, dateTime.timeZoneId);
+    }
+    if (dateTime instanceof Temporal.ZonedDateTime) {
+      return new PreciseDate(dateTime.epochNanoseconds, dateTime.timeZoneId);
+    }
+    if (dateTime instanceof Temporal.Instant) {
       return new PreciseDate(dateTime.epochNanoseconds);
+    }
     return new PreciseDate(toNanoseconds(dateTime));
   }
 
-  get [Symbol.toStringTag]() {
-    return 'PreciseDate';
+  get timeZoneId() {
+    return this.#value.timeZoneId;
   }
 
   utcOffset() {
@@ -115,13 +127,14 @@ export class PreciseDate {
   add(value: number, unit: ManipulateType) {
     const type = toValueType(unit, manipulateMap);
     if (!type) throw new Error(`Unsupported unit: ${unit}`);
-    return PreciseDate.from(this.#value.add({ [type]: value }, { overflow: 'reject' }));
+    // `Temporal.ZonedDateTime.add()` only accepts integer
+    return PreciseDate.from(this.#value.add({ [type]: Math.trunc(value) }, { overflow: 'reject' }));
   }
 
   subtract(value: number, unit: ManipulateType) {
     const type = toValueType(unit, manipulateMap);
     if (!type) throw new Error(`Unsupported unit: ${unit}`);
-    return PreciseDate.from(this.#value.subtract({ [type]: value }, { overflow: 'reject' }));
+    return PreciseDate.from(this.#value.subtract({ [type]: Math.trunc(value) }, { overflow: 'reject' }));
   }
 
   isDivisibleBy(divisor: number) {
@@ -149,5 +162,15 @@ export class PreciseDate {
 
   toJSON() {
     return this.#value.toJSON();
+  }
+
+  get [Symbol.toStringTag]() {
+    return 'PreciseDate';
+  }
+
+  [Symbol.toPrimitive](hint: 'string' | 'number' | 'default') {
+    if (hint === 'number') return this.valueOf();
+    if (hint === 'string') return this.toString();
+    return this.toString();
   }
 }

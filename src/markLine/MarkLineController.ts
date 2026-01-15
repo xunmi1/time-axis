@@ -1,5 +1,4 @@
-import { MarkLine, type MarkLinePlugin } from './MarkLine';
-import { PreciseDate } from '../date';
+import { MarkLine } from './MarkLine';
 import type { TimeAxis } from '../TimeAxis';
 import { clamp, inRange } from '../utils';
 
@@ -14,8 +13,8 @@ export class MarkLineController {
   /** 刻度线间距 */
   spacing = 8;
 
-  #markLines: MarkLinePlugin[] = [];
-  markLine: MarkLinePlugin | undefined;
+  #markLines: MarkLine[] = [];
+  markLine: MarkLine | undefined;
 
   constructor(timeAxis: TimeAxis) {
     this.timeAxis = timeAxis;
@@ -33,35 +32,23 @@ export class MarkLineController {
     return this;
   }
 
-  /**
-   * 根据时间范围, 自适应时间轴的渲染范围
-   * @param start - 起始时间
-   * @param end - 结束时间
-   * @param ratio - 占比
-   */
-  adaptiveByDateRange(start: PreciseDate, end: PreciseDate, ratio = 1) {
-    const difference = end.valueOf() - start.valueOf();
-    if (difference <= 0) {
-      throw new Error('End date must be greater than start date');
-    }
-    // width of 1ms
-    const width = (this.timeAxis.width * ratio * 1_000_000) / Number(difference);
-    const candidates = this.#markLines.map(v => width * v.base);
+  get pixelDuration() {
+    return this.markLine!.increment / this.spacing;
+  }
+
+  fitByPixelDuration(pixelDuration: number) {
+    const candidates = this.#markLines.map(v => v.increment / pixelDuration);
     const index = candidates.findLastIndex(v => inRange(v, SPACING_MIN, SPACING_MAX));
     if (index < 0) {
       // 找不到合适的时, 寻找最接近 `SPACING_MIN` 和 `SPACING_MAX` 的 `spacing`
       const minIndex = closestIndexToBoundary(candidates, SPACING_MIN, SPACING_MAX);
       this.markLine = this.#markLines.at(minIndex)!;
       this.spacing = clamp(candidates.at(minIndex)!, SPACING_MIN, SPACING_MAX);
-      console.warn(`Can't adaptive by date range.`);
+      console.warn(`Unable to fit to the appropriate size.`);
     } else {
       this.markLine = this.#markLines.at(index);
       this.spacing = candidates.at(index)!;
     }
-  }
-
-  canScale(ratio: number) {
-    return (ratio < 1 && this.spacing >= SPACING_MIN) || (ratio > 1 && this.spacing <= SPACING_MAX);
   }
 
   draw() {
@@ -77,7 +64,7 @@ export class MarkLineController {
     const total = Math.ceil(this.timeAxis.width / spacing);
     for (let index = 0; index < total; index += 1) {
       const x = offset + index * spacing;
-      const current = startDate.add(markLine.base * index, 'ms');
+      const current = startDate.add(markLine.increment * index, 'ns');
       markLine.draw(x, current);
     }
 
@@ -93,6 +80,10 @@ export class MarkLineController {
     const next = this.#markLines.findLast(v => v.base >= unit);
     this.markLine = next ?? current;
     this.spacing = spacing / (current.base / this.markLine.base);
+  }
+
+  canScale(ratio: number) {
+    return (ratio < 1 && this.spacing >= SPACING_MIN) || (ratio > 1 && this.spacing <= SPACING_MAX);
   }
 }
 

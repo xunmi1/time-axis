@@ -16,6 +16,10 @@ interface Events extends ListenerMap {
   destroyed: () => void;
 }
 
+interface TimeAxisOptions {
+  theme?: Theme;
+}
+
 export class TimeAxis {
   context: CanvasRenderingContext2D;
 
@@ -34,12 +38,12 @@ export class TimeAxis {
 
   #eventController = new AbortController();
 
-  constructor(canvas: HTMLCanvasElement, options?: { theme?: Theme }) {
+  constructor(canvas: HTMLCanvasElement, options?: TimeAxisOptions) {
     this.context = canvas.getContext('2d')!;
-    if (options?.theme) this.theme = options.theme;
+    this.#markLineController = new MarkLineController(this);
+    this.theme = options?.theme ?? defaultTheme;
     this.#setRect();
     this.onNative('wheel', this.#onWheel, { passive: false });
-    this.#markLineController = new MarkLineController(this);
   }
 
   get playing() {
@@ -159,12 +163,11 @@ export class TimeAxis {
   }
 
   getPosByDate(date: PreciseDate) {
-    return (Number(date.valueOf() - this.date.valueOf()) / 1_000_000 / this.markLine!.base) * this.spacing;
+    return Number(date.valueOf() - this.date.valueOf()) / this.#markLineController.pixelDuration;
   }
 
   getDateByPos(x: number) {
-    const amount = (x * this.markLine!.base * 1_000_000) / this.spacing;
-    return this.date.add(Math.ceil(amount), 'ns');
+    return this.date.add(x * this.#markLineController.pixelDuration, 'ns');
   }
 
   resize() {
@@ -174,17 +177,6 @@ export class TimeAxis {
 
   use(...args: Parameters<MarkLineController['use']>) {
     this.#markLineController.use(...args);
-  }
-
-  /**
-   * 根据时间范围, 自适应时间轴的渲染范围
-   * @param start - 起始时间
-   * @param end - 结束时间
-   * @param ratio - 占比
-   */
-  adaptiveByDateRange(start: PreciseDate, end: PreciseDate, ratio: number) {
-    this.date = start;
-    this.#markLineController.adaptiveByDateRange(start, end, ratio);
   }
 
   canScale(ratio: number) {
@@ -242,5 +234,17 @@ export class TimeAxis {
     context.font = this.theme.font;
     context.fillStyle = this.theme.textColor;
     context.strokeStyle = this.theme.textColor;
+  }
+
+  fitByDateRange(start: PreciseDate, end: PreciseDate) {
+    this.date = start;
+    const duration = end.valueOf() - start.valueOf();
+    if (duration <= 0) throw new RangeError('Start date must be less than end date');
+    this.fitByDuration(Number(duration));
+  }
+
+  fitByDuration(duration: number) {
+    if (duration <= 0) throw new RangeError('Duration must be greater than 0');
+    this.#markLineController.fitByPixelDuration(duration / this.width);
   }
 }
