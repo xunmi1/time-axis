@@ -13,10 +13,16 @@ declare module '../theme' {
   }
 }
 
+export const unitTypes = ['year', 'month', 'day', 'hour', 'minute', 'second', 'millisecond'] as const;
+type UnitType = (typeof unitTypes)[number];
+
 export interface MarkLinePlugin {
-  base: number;
+  readonly unit: UnitType;
+  readonly increment: number;
   draw(x: number, current: PreciseDate): void;
 }
+
+const start = new Temporal.ZonedDateTime(0n, 'UTC');
 
 export abstract class MarkLine implements MarkLinePlugin {
   static SMALL = 12;
@@ -28,19 +34,20 @@ export abstract class MarkLine implements MarkLinePlugin {
   timeAxis: TimeAxis;
 
   /** 每一刻度线代表的时长, 单位: 毫秒 */
-  abstract base: number;
+  abstract readonly unit: UnitType;
+  abstract readonly increment: number;
 
   constructor(timeAxis: TimeAxis) {
     this.timeAxis = timeAxis;
   }
 
-  get spacing() {
-    return this.timeAxis.spacing;
+  get base() {
+    // 标准基础值, 依此基础进行浮动
+    return Number(start.add({ [`${this.unit}s`]: this.increment }).epochNanoseconds);
   }
 
-  get increment() {
-    // millisecond -> nanosecond
-    return this.base * 1_000_000;
+  get spacing() {
+    return this.timeAxis.spacing;
   }
 
   drawMarkLine(x: number, y: number, length: number) {
@@ -61,32 +68,59 @@ export abstract class MarkLine implements MarkLinePlugin {
   abstract draw(x: number, current: PreciseDate): void;
 }
 
+/** 1 month */
+export class MarkLineMonth1 extends MarkLine {
+  readonly unit = 'month';
+  increment = 1;
+
+  draw(x: number, current: PreciseDate): void {
+    // day 是从 1 开始
+    const month = current.get('month');
+    if (month === 1) {
+      this.drawMarkLine(x, -4, MarkLine.LARGE);
+    } else if (month === 7) {
+      this.drawMarkLine(x, 0, MarkLine.MIDDLE);
+    } else {
+      this.drawMarkLine(x, 0, MarkLine.SMALL);
+    }
+
+    if (month === 1) {
+      this.fillText(current.format('YYYY'), x, 'top');
+    }
+
+    if ((this.spacing > 24 && month % 3 === 1) || month % 6 === 1) {
+      this.fillText(current.format('MM-DD'), x, 'bottom');
+    }
+  }
+}
+
 /** 1 day */
 export class MarkLineDay1 extends MarkLine {
-  base = DAY;
+  readonly unit = 'day';
+  increment = 1;
 
   draw(x: number, current: PreciseDate): void {
     // day 是从 1 开始
     const day = current.get('dates');
     if (day === 1) {
       this.drawMarkLine(x, -4, MarkLine.LARGE);
-    } else if (day % 5 === 0) {
+    } else if (day % 5 === 1) {
       this.drawMarkLine(x, 0, MarkLine.MIDDLE);
     } else {
       this.drawMarkLine(x, 0, MarkLine.SMALL);
     }
 
     if (day === 1) {
-      if (this.spacing > 6 || current.get('months') % 3 === 0) {
+      if (this.spacing > 6 || current.get('month') % 3 === 0) {
         this.fillText(current.format('YYYY-MM'), x, 'top');
       }
-    } else if (this.spacing > 16 && (day === 10 || day === 20)) {
+    } else if (this.spacing > 16 && (day === 11 || day === 21)) {
       this.fillText(current.format('YYYY-MM-DD'), x, 'top');
     }
 
     if (
-      (this.spacing > 24 && (day === 1 || day % 5 === 0)) ||
-      (this.spacing > 6 && (day === 1 || day === 10 || day === 20)) ||
+      (this.spacing > 24 && (day === 1 || day % 5 === 1)) ||
+      (this.spacing > 6 && (day === 1 || day === 11 || day === 21)) ||
       day === 1
     ) {
       this.fillText(current.format('MM-DD'), x, 'bottom');
@@ -96,7 +130,8 @@ export class MarkLineDay1 extends MarkLine {
 
 /** 1 hour */
 export class MarkLineHour1 extends MarkLine {
-  base = HOUR;
+  readonly unit = 'hour';
+  increment = 1;
 
   draw(x: number, current: PreciseDate): void {
     const spacing = this.spacing;
@@ -121,7 +156,8 @@ export class MarkLineHour1 extends MarkLine {
 
 /** 10 minutes */
 export class MarkLineMinutes10 extends MarkLine {
-  base = MINUTE * 10;
+  readonly unit = 'minute';
+  increment = 10;
 
   draw(x: number, current: PreciseDate): void {
     if (current.isDivisibleBy(HOUR * 6)) {
@@ -144,7 +180,8 @@ export class MarkLineMinutes10 extends MarkLine {
 
 /** 1 minute */
 export class MarkLineMinute1 extends MarkLine {
-  base = MINUTE;
+  readonly unit = 'minute';
+  increment = 1;
 
   draw(x: number, current: PreciseDate): void {
     const spacing = this.spacing;
@@ -169,7 +206,8 @@ export class MarkLineMinute1 extends MarkLine {
 
 /** 10 seconds */
 export class MarkLineSeconds10 extends MarkLine {
-  base = SECOND * 10;
+  readonly unit = 'second';
+  increment = 10;
 
   draw(x: number, current: PreciseDate): void {
     if (current.isDivisibleBy(MINUTE * 20)) {
@@ -192,7 +230,8 @@ export class MarkLineSeconds10 extends MarkLine {
 
 /** 1 second */
 export class MarkLineSecond1 extends MarkLine {
-  base = SECOND;
+  readonly unit = 'second';
+  increment = 1;
 
   draw(x: number, current: PreciseDate): void {
     if (current.isDivisibleBy(MINUTE)) {
@@ -215,7 +254,8 @@ export class MarkLineSecond1 extends MarkLine {
 
 /** 100 milliseconds */
 export class MarkLineMillseconds100 extends MarkLine {
-  base = MILLISECOND * 100;
+  readonly unit = 'millisecond';
+  increment = 100;
 
   draw(x: number, current: PreciseDate): void {
     const spacing = this.spacing;
@@ -239,7 +279,8 @@ export class MarkLineMillseconds100 extends MarkLine {
 
 /** 10 milliseconds */
 export class MarkLineMillseconds10 extends MarkLine {
-  base = MILLISECOND * 10;
+  readonly unit = 'millisecond';
+  increment = 10;
 
   draw(x: number, current: PreciseDate): void {
     const spacing = this.spacing;
@@ -263,7 +304,8 @@ export class MarkLineMillseconds10 extends MarkLine {
 
 /** 1 millisecond */
 export class MarkLineMillsecond1 extends MarkLine {
-  base = MILLISECOND;
+  readonly unit = 'millisecond';
+  increment = 1;
 
   draw(x: number, current: PreciseDate): void {
     const spacing = this.spacing;
@@ -290,6 +332,7 @@ export class MarkLineMillsecond1 extends MarkLine {
 }
 
 export const presetMarkLines = [
+  MarkLineMonth1,
   MarkLineDay1,
   MarkLineHour1,
   MarkLineMinutes10,

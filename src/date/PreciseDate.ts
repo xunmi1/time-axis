@@ -25,7 +25,9 @@ type UnitTypeLong =
 
 export type UnitType = UnitTypeLong | `${UnitTypeLong}s` | UnitTypeShort;
 
-type ValueUnitType = Exclude<UnitTypeLong, 'date'> | 'dayOfWeek';
+type ValueType = Exclude<UnitTypeLong, 'date'>;
+
+type ValueUnitType = ValueType | 'dayOfWeek';
 
 const unitMap = new Map<ValueUnitType, UnitType[]>([
   ['year', ['y', 'year', 'years']],
@@ -41,7 +43,7 @@ const unitMap = new Map<ValueUnitType, UnitType[]>([
 ]);
 
 export type ManipulateType = Exclude<UnitType, 'D' | 'date' | 'dates'>;
-type ValueManipulateType = `${Exclude<UnitTypeLong, 'date'>}s`;
+type ValueManipulateType = `${ValueType}s`;
 
 const manipulateMap = new Map<ValueManipulateType, ManipulateType[]>([
   ['years', ['y', 'year', 'years']],
@@ -69,11 +71,6 @@ function toValueType<Type, ValueType>(
 }
 
 const defaultFormat = Intl.DateTimeFormat().resolvedOptions();
-
-function divideWithCeil(dividend: bigint, divisor: bigint) {
-  if (divisor === 0n) throw new RangeError('Cannot divide by zero');
-  return (dividend + divisor - 1n) / divisor;
-}
 
 export type PreciseDateInput = bigint | { valueOf: () => bigint };
 
@@ -141,11 +138,21 @@ export class PreciseDate {
     return (this.valueOf() + BigInt(this.utcOffset())) % toNanoseconds(divisor) === 0n;
   }
 
-  endOf(value: number) {
+  endOf(value: number, unit: ValueType) {
     if (value === 0) return new PreciseDate(this);
-    const offset = BigInt(this.utcOffset());
-    const nanoValue = toNanoseconds(value);
-    return new PreciseDate(divideWithCeil(this.valueOf() + offset, nanoValue) * nanoValue - offset);
+    if (unit === 'year') {
+      const year = Math.ceil(this.get('year') / value) * value;
+      return PreciseDate.from(Temporal.ZonedDateTime.from({ year, month: 1, day: 1, timeZone: this.timeZoneId }));
+    }
+    if (unit === 'month') {
+      const monthsInYear = this.#value.monthsInYear;
+      if (value >= monthsInYear || monthsInYear % value !== 0) throw new RangeError('Invalid value');
+      const month = Math.ceil(this.get('month') / value) * value;
+      return PreciseDate.from(
+        Temporal.ZonedDateTime.from({ year: this.get('year'), month: month, day: 1, timeZone: this.timeZoneId })
+      );
+    }
+    return PreciseDate.from(this.#value.round({ roundingIncrement: value, smallestUnit: unit, roundingMode: 'ceil' }));
   }
 
   valueOf() {

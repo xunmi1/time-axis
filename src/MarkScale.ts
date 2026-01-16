@@ -1,5 +1,15 @@
 import type { TimeAxis } from './TimeAxis';
-import { DAY, HOUR, MINUTE, SECOND, bound } from './utils';
+import { bound } from './utils';
+
+const shortUnitMap = new Map([
+  ['millisecond', 'ms'],
+  ['second', 's'],
+  ['minute', 'min'],
+  ['hour', 'hour'],
+  ['day', 'day'],
+  ['month', 'mo'],
+  ['year', 'year'],
+]);
 
 /** 比例尺 */
 export class MarkScale {
@@ -18,22 +28,17 @@ export class MarkScale {
     this.timeAxis.off('drawn', this.draw);
   }
 
-  get base() {
-    return this.timeAxis.markLine!.base;
-  }
-
   get displayText() {
-    const unit = this.base;
-    if (unit >= DAY) return `${unit / DAY} day`;
-    if (unit >= HOUR) return `${unit / HOUR} hour`;
-    if (unit >= MINUTE) return `${unit / MINUTE} min`;
-    if (unit >= SECOND) return `${unit / SECOND} s`;
-    return `${unit} ms`;
+    const { unit, increment } = this.timeAxis.markLine!;
+    const shortUnit = shortUnitMap.get(unit);
+    if (shortUnit) return `${increment} ${shortUnit}`;
+    return `${increment} ${unit}`;
   }
 
   @bound
   draw() {
     const timeAxis = this.timeAxis;
+    if (!timeAxis.markLine) return;
     const context = this.timeAxis.context;
     const width = this.width;
     const right = this.right;
