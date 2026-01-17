@@ -1,6 +1,6 @@
 import type { PreciseDate } from './date';
 import type { TimeAxis } from './TimeAxis';
-import { bound, MILLISECOND, SECOND } from './utils';
+import { bound, clamp, measureText } from './utils';
 
 declare module './theme' {
   export interface Theme {
@@ -88,35 +88,44 @@ export class Indicator {
     context.stroke();
   }
 
+  get displayText() {
+    const current = this.timeAxis.getDateByPos(this.#offsetX);
+    const unit = this.timeAxis.markLine!.unit;
+    switch (unit) {
+      case 'year':
+      case 'month':
+        return current.format('YYYY-MM-DD');
+      case 'day':
+        return current.format('YYYY-MM-DD HH:mm');
+      case 'hour':
+      case 'minute':
+        return current.format('YYYY-MM-DD HH:mm:ss');
+      case 'second':
+        return current.format('YYYY-MM-DD HH:mm:ss:SSS');
+      default:
+        return current.format('YYYY-MM-DD HH:mm:ss.SSSSSS');
+    }
+  }
+
   #drawTextBox() {
     const context = this.timeAxis.context;
     const offsetX = this.#offsetX;
     const bottom = this.timeAxis.baseline + this.textBoxTop;
-    const boundStart = 0;
-    const boundEnd = this.timeAxis.width;
-
-    const current = this.timeAxis.getDateByPos(this.#offsetX);
-    let text: string;
-    if (this.timeAxis.markLine!.base > SECOND) {
-      text = current.format('YYYY-MM-DD HH:mm:ss');
-    } else if (this.timeAxis.markLine!.base > MILLISECOND * 10) {
-      text = current.format('YYYY-MM-DD HH:mm:ss.SSS');
-    } else {
-      text = current.format('YYYY-MM-DD HH:mm:ss.SSSSSS');
-    }
+    const text = this.displayText;
     // 需先设置字体，才能准确计算出文字尺寸
     context.font = this.theme.font ?? this.timeAxis.theme.font;
-    const textMetrics = context.measureText(text);
-    // 四周额外增加 4px 的边距
-    const padding = 4;
-    const theme = this.theme;
+    const textMetrics = measureText(context, text);
+    // 四周额外增加 8px 的边距
+    const padding = 8;
     const boxWidth = textMetrics.width + padding * 2;
-    const boxHeight = textMetrics.fontBoundingBoxAscent + textMetrics.fontBoundingBoxDescent + padding * 2;
-    const boxPosX = Math.min(Math.max(offsetX - boxWidth / 2, boundStart), boundEnd - boxWidth);
-    context.fillStyle = theme.backgroundColor;
-    context.fillRect(boxPosX, bottom - textMetrics.fontBoundingBoxAscent - padding, boxWidth, boxHeight);
+    const boxHeight = textMetrics.height + padding * 2;
+    const boundStart = 0;
+    const boundEnd = this.timeAxis.width - boxWidth;
+    const boxPosX = clamp(offsetX - boxWidth / 2, boundStart, boundEnd);
+    context.fillStyle = this.theme.backgroundColor;
+    context.fillRect(boxPosX, bottom - textMetrics.ascent - padding, boxWidth, boxHeight);
 
-    context.fillStyle = theme.labelColor;
+    context.fillStyle = this.theme.labelColor;
     context.textAlign = 'left';
     context.fillText(text, boxPosX + padding, bottom);
   }

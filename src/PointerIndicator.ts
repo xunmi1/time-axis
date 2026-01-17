@@ -4,12 +4,7 @@ import { bound } from './utils';
 
 declare module './theme' {
   export interface Theme {
-    pointerIndicator?: {
-      font?: string;
-      backgroundColor: string;
-      lineColor: string;
-      labelColor: string;
-    };
+    pointerIndicator?: Theme['indicator'];
   }
 }
 

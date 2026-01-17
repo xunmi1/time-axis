@@ -83,7 +83,7 @@ export class PreciseDate {
 
   static from(dateTime: PreciseDate | Temporal.ZonedDateTime | Temporal.Instant | NumberLike) {
     if (dateTime instanceof PreciseDate) {
-      return new PreciseDate(dateTime, dateTime.timeZoneId);
+      return new PreciseDate(dateTime.#value.epochNanoseconds, dateTime.#value.timeZoneId);
     }
     if (dateTime instanceof Temporal.ZonedDateTime) {
       return new PreciseDate(dateTime.epochNanoseconds, dateTime.timeZoneId);
@@ -125,17 +125,19 @@ export class PreciseDate {
     const type = toValueType(unit, manipulateMap);
     if (!type) throw new Error(`Unsupported unit: ${unit}`);
     // `Temporal.ZonedDateTime.add()` only accepts integer
-    return PreciseDate.from(this.#value.add({ [type]: Math.trunc(value) }, { overflow: 'reject' }));
+    return PreciseDate.from(this.#value.add({ [type]: Math.trunc(value) }));
   }
 
   subtract(value: number, unit: ManipulateType) {
     const type = toValueType(unit, manipulateMap);
     if (!type) throw new Error(`Unsupported unit: ${unit}`);
-    return PreciseDate.from(this.#value.subtract({ [type]: Math.trunc(value) }, { overflow: 'reject' }));
+    return PreciseDate.from(this.#value.subtract({ [type]: Math.trunc(value) }));
   }
 
-  isDivisibleBy(divisor: number) {
-    return (this.valueOf() + BigInt(this.utcOffset())) % toNanoseconds(divisor) === 0n;
+  since(date: PreciseDate, unit: ManipulateType) {
+    const type = toValueType(unit, manipulateMap);
+    if (!type) throw new Error(`Unsupported unit: ${unit}`);
+    return this.#value.since(date.#value, { largestUnit: type })[type];
   }
 
   endOf(value: number, unit: ValueType) {

@@ -217,7 +217,7 @@ export class TimeAxis {
   #drawAxisLine() {
     const context = this.context;
     context.save();
-    context.strokeStyle = this.theme.axis.lineColor;
+    context.strokeStyle = this.theme.lineColor;
     context.lineWidth = 1;
     context.beginPath();
     // 1px 线段会在路径两边各延伸 0.5px, 再非高分辨率屏下，其边缘不在像素边界位置，出现模糊

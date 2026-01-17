@@ -1,14 +1,3 @@
-/** 1 millisecond */
-export const MILLISECOND = 1;
-/** 1 second */
-export const SECOND = 1000 * MILLISECOND;
-/** 1 minute */
-export const MINUTE = 60 * SECOND;
-/** 1 hour */
-export const HOUR = 60 * MINUTE;
-/** 1 day */
-export const DAY = 24 * HOUR;
-
 /**
  * `Promise.withResolvers` polyfill
  */
@@ -59,4 +48,16 @@ export function bound<This, Args extends unknown[], Return>(
       this[methodName] = method.bind(this);
     });
   }
+}
+
+export function measureText(ctx: CanvasRenderingContext2D, text: string) {
+  const metrics = ctx.measureText(text);
+  return {
+    height: Math.abs(metrics.actualBoundingBoxAscent) + Math.abs(metrics.actualBoundingBoxDescent),
+    width: Math.abs(metrics.actualBoundingBoxLeft) + Math.abs(metrics.actualBoundingBoxRight),
+    left: metrics.actualBoundingBoxLeft,
+    right: metrics.actualBoundingBoxRight,
+    ascent: metrics.actualBoundingBoxAscent,
+    descent: metrics.actualBoundingBoxDescent,
+  };
 }

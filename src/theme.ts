@@ -1,15 +1,16 @@
 export interface Theme {
   backgroundColor: string;
-  textColor: '#232323';
+  textColor: string;
+  lineColor: string;
   font: string;
 }
 
 export const defaultTheme: Theme = {
   backgroundColor: '#fff',
   textColor: '#232323',
+  lineColor: '#232323',
   font: '14px system-ui',
   axis: {
-    lineColor: '#232323',
     tickColor: '#232323',
     labelColor: '#232323',
   },
