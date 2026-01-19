@@ -9,7 +9,7 @@ const shortUnitMap = new Map([
   ['day', 'day'],
   ['month', 'mo'],
   ['year', 'year'],
-]);
+] as const);
 
 /** 比例尺 */
 export class MarkScale {

@@ -126,7 +126,7 @@ export class Indicator {
     context.fillRect(boxPosX, bottom - textMetrics.ascent - padding, boxWidth, boxHeight);
 
     context.fillStyle = this.theme.labelColor;
-    context.textAlign = 'left';
+    context.textAlign = 'start';
     context.fillText(text, boxPosX + padding, bottom);
   }
 }

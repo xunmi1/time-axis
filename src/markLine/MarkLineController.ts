@@ -61,8 +61,8 @@ export class MarkLineController {
   draw() {
     const markLine = this.markLine;
     if (!markLine) return;
-    const context = this.timeAxis.context;
-    context.save();
+    const ctx = this.timeAxis.context;
+    ctx.save();
     const width = this.timeAxis.width;
     // 起始刻度的时间
     let current = this.timeAxis.date.endOf(markLine.increment, markLine.unit);
@@ -72,8 +72,21 @@ export class MarkLineController {
       current = current.add(markLine.increment, markLine.unit);
       x = this.timeAxis.getPosByDate(current);
     }
+    ctx.restore();
+    this.drawBoundaryLabel();
+  }
 
-    context.restore();
+  drawBoundaryLabel() {
+    const markLine = this.markLine!;
+    const ctx = this.timeAxis.context;
+    ctx.save();
+    ctx.textAlign = 'start';
+    markLine.fillText(this.timeAxis.date, 0, 'primary');
+    ctx.textAlign = 'end';
+    const width = this.timeAxis.width;
+    const end = this.timeAxis.getDateByPos(width);
+    markLine.fillText(end, width, 'primary');
+    ctx.restore();
   }
 
   scale(ratio: number) {
