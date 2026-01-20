@@ -49,15 +49,3 @@ export function bound<This, Args extends unknown[], Return>(
     });
   }
 }
-
-export function measureText(ctx: CanvasRenderingContext2D, text: string) {
-  const metrics = ctx.measureText(text);
-  return {
-    height: Math.abs(metrics.actualBoundingBoxAscent) + Math.abs(metrics.actualBoundingBoxDescent),
-    width: Math.abs(metrics.actualBoundingBoxLeft) + Math.abs(metrics.actualBoundingBoxRight),
-    left: metrics.actualBoundingBoxLeft,
-    right: metrics.actualBoundingBoxRight,
-    ascent: metrics.actualBoundingBoxAscent,
-    descent: metrics.actualBoundingBoxDescent,
-  };
-}

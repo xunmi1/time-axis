@@ -1,5 +1,6 @@
 import type { TimeAxis } from '../TimeAxis';
 import { PreciseDate } from '../date';
+import { Vector2D } from '../shapes';
 
 declare module '../theme' {
   export interface Theme {
@@ -36,22 +37,21 @@ export abstract class MarkLine {
   }
 
   drawMarkLine(x: number, y: number, length: number) {
-    const y1 = this.timeAxis.baseline + y;
+    const start = new Vector2D(x, this.timeAxis.baseline + y);
     this.timeAxis.addShape({
       type: 'line',
-      attrs: { x1: x, y1, x2: x, y2: y1 + length },
-      style: { stroke: this.timeAxis.theme.axis.tickColor },
+      attrs: { start, end: start.add(0, length) },
+      style: { color: this.timeAxis.theme.axis.tickColor },
     });
   }
 
   fillText(date: PreciseDate, x: number, level: 'primary' | 'secondary') {
     const offsetY = level === 'primary' ? -8 : MarkLine.LARGE + 12;
     const text = this.formatter(date, level);
-
     this.timeAxis.addShape({
       type: 'text',
-      attrs: { x, y: this.timeAxis.baseline + offsetY, text },
-      style: { fill: this.timeAxis.theme.axis.labelColor },
+      attrs: { start: new Vector2D(x, this.timeAxis.baseline + offsetY), text },
+      style: { color: this.timeAxis.theme.axis.labelColor },
     });
   }
 

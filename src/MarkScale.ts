@@ -1,3 +1,4 @@
+import { Vector2D } from './shapes';
 import type { TimeAxis } from './TimeAxis';
 import { bound } from './utils';
 
@@ -40,20 +41,16 @@ export class MarkScale {
     const timeAxis = this.timeAxis;
     if (!timeAxis.markLine) return;
     const width = this.width;
-    const right = this.right;
-    const bottom = this.bottom;
     const tickHeight = 6;
-    const startX = timeAxis.width - width - right;
-    const endX = timeAxis.width - right;
-    const startY = timeAxis.height - bottom - tickHeight;
-    const endY = timeAxis.height - bottom;
+    const start = timeAxis.size.subtract(width + this.right, this.bottom + tickHeight);
     this.timeAxis.addShape({
-      type: 'path',
-      attrs: { paths: [startX, startY, startX, endY, endX, endY, endX, startY] },
+      type: 'polyline',
+      attrs: { points: [start, start.add(0, tickHeight), start.add(width, tickHeight), start.add(width, 0)] },
     });
     this.timeAxis.addShape({
       type: 'text',
-      attrs: { x: startX + width / 2, y: startY, text: this.displayText },
+      attrs: { start: start.add(width / 2, -2), text: this.displayText },
+      style: { align: 'center' },
     });
   }
 }

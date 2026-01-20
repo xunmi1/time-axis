@@ -1,5 +1,5 @@
 import type { PreciseDate } from './date';
-import type { Shape } from './Shapes';
+import { Vector2D, type CreateShape, type Shape } from './shapes';
 import type { TimeAxis } from './TimeAxis';
 import { bound, clamp } from './utils';
 
@@ -54,23 +54,24 @@ export class Indicator {
   }
 
   #drawLine() {
-    const offsetX = this.#offsetX;
-    const bottom = this.timeAxis.height;
     const lineColor = this.theme.lineColor;
-    this.timeAxis.addShape({
-      type: 'triangle',
-      attrs: { x1: offsetX - 4, y1: 0, x2: offsetX + 4, y2: 0, x3: offsetX, y3: 4 },
-      style: { fill: lineColor },
-    });
-    this.timeAxis.addShape({
-      type: 'triangle',
-      attrs: { x1: offsetX - 4, y1: bottom, x2: offsetX + 4, y2: bottom, x3: offsetX, y3: bottom - 4 },
-      style: { fill: lineColor },
-    });
+    const top = new Vector2D(this.#offsetX, 0);
+    const bottom = new Vector2D(this.#offsetX, this.timeAxis.height);
     this.timeAxis.addShape({
       type: 'line',
-      attrs: { x1: offsetX, y1: 0, x2: offsetX, y2: bottom },
-      style: { stroke: lineColor, lineWidth: 1 },
+      attrs: { start: top, end: bottom },
+      style: { color: lineColor, width: 1 },
+    });
+    const triangleStyle = { fillColor: lineColor };
+    this.timeAxis.addShape({
+      type: 'triangle',
+      attrs: { a: top.subtract(4, 0), b: top.add(4, 0), c: top.add(0, 4) },
+      style: triangleStyle,
+    });
+    this.timeAxis.addShape({
+      type: 'triangle',
+      attrs: { a: bottom.subtract(4, 0), b: bottom.add(4, 0), c: bottom.subtract(0, 4) },
+      style: triangleStyle,
     });
   }
 
@@ -96,25 +97,33 @@ export class Indicator {
   #drawTextBox() {
     const offsetX = this.#offsetX;
     const bottom = this.timeAxis.baseline + this.textBoxTop;
-    const text = this.displayText;
     const theme = this.theme;
-    const shapeText: Shape = {
+    const textShape: CreateShape = {
       type: 'text',
-      attrs: { text, x: 0, y: bottom },
-      style: { fill: theme.labelColor, align: 'start', font: theme.font },
+      attrs: { text: this.displayText, start: new Vector2D(offsetX, bottom) },
+      style: { color: theme.labelColor, align: 'center', font: theme.font },
     };
-    const textMetrics = this.timeAxis.measure(shapeText)!;
+    const textMetrics = this.timeAxis.measure(textShape)!;
     // 四周额外增加 8px 的边距
     const padding = 8;
+    const boundStart = new Vector2D(0, 0);
+    const boundEnd = this.timeAxis.size;
     const boxWidth = textMetrics.width + padding * 2;
     const boxHeight = textMetrics.height + padding * 2;
-    const boxPosX = clamp(offsetX - boxWidth / 2, 0, this.timeAxis.width - boxWidth);
+
+    const boxStart = new Vector2D(offsetX, bottom)
+      .subtract(boxWidth / 2, padding + textMetrics.top)
+      .clamp(boundStart, boundEnd.subtract(boxWidth, 0));
+
     this.timeAxis.addShape({
       type: 'rect',
-      attrs: { x: boxPosX, y: bottom - textMetrics.ascent - padding, width: boxWidth, height: boxHeight },
-      style: { fill: theme.backgroundColor },
+      attrs: { start: boxStart, end: boxStart.add(boxWidth, boxHeight) },
+      style: { fillColor: theme.backgroundColor },
     });
-    shapeText.attrs.x = boxPosX + padding;
-    this.timeAxis.addShape(shapeText);
+    textShape.attrs.start = textShape.attrs.start.clamp(
+      boundStart.add(boxWidth / 2, 0),
+      boundEnd.subtract(boxWidth / 2, 0)
+    );
+    this.timeAxis.addShape(textShape);
   }
 }

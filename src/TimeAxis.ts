@@ -5,7 +5,8 @@ import { PreciseDate } from './date';
 
 import { defaultTheme, type Theme } from './theme';
 import { bound, withResolvers } from './utils';
-import { Shapes, type Shape } from './Shapes';
+import { Shapes, type CreateShape } from './shapes/Shapes';
+import { Vector2D } from './shapes';
 
 interface Events extends ListenerMap {
   /** 当每帧渲染前 */
@@ -56,12 +57,17 @@ export class TimeAxis {
     return this.#animationFrame.isActive;
   }
 
+  get size() {
+    const canvas = this.#context.canvas;
+    return this.transformInverse(new Vector2D(canvas.width, canvas.height));
+  }
+
   get height() {
-    return this.transformPointInverse({ y: this.#context.canvas.height }).y;
+    return this.size.y;
   }
 
   get width() {
-    return this.transformPointInverse({ x: this.#context.canvas.width }).x;
+    return this.size.x;
   }
 
   get markLine() {
@@ -182,11 +188,11 @@ export class TimeAxis {
     this.#draw();
   }
 
-  addShape(shape: Shape) {
+  addShape(shape: CreateShape) {
     this.#shapes.add(shape);
   }
 
-  measure(shape: Shape) {
+  measure(shape: CreateShape) {
     return this.#shapes.measure(shape);
   }
 
@@ -198,9 +204,9 @@ export class TimeAxis {
     return this.#markLineController.canScale(ratio);
   }
 
-  transformPointInverse(origin: { x?: number; y?: number }) {
+  transformInverse(origin: Vector2D) {
     const point = this.#context.getTransform().inverse().transformPoint(origin);
-    return { x: point.x, y: point.y };
+    return Vector2D.from(point);
   }
 
   #setRect() {
@@ -231,11 +237,11 @@ export class TimeAxis {
 
   #drawAxisLine() {
     // 1px 线段会在路径两边各延伸 0.5px, 再非高分辨率屏下，其边缘不在像素边界位置，出现模糊
-    const y = Math.trunc(this.baseline) + 0.5;
+    const start = new Vector2D(0, Math.trunc(this.baseline) + 0.5);
     this.addShape({
       type: 'line',
-      attrs: { x1: 0, y1: y, x2: this.width, y2: y },
-      style: { lineWidth: 1, stroke: this.theme.lineColor },
+      attrs: { start, end: start.add(this.width, 0) },
+      style: { width: 1, color: this.theme.lineColor },
     });
   }
 
