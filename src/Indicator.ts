@@ -1,6 +1,7 @@
 import type { PreciseDate } from './date';
+import type { Shape } from './Shapes';
 import type { TimeAxis } from './TimeAxis';
-import { bound, clamp, measureText } from './utils';
+import { bound, clamp } from './utils';
 
 declare module './theme' {
   export interface Theme {
@@ -37,14 +38,8 @@ export class Indicator {
   draw() {
     if (this.date == null) return;
     this.#offsetX = this.timeAxis.getPosByDate(this.date);
-    const context = this.timeAxis.context;
-    context.save();
     this.#drawLine();
-    context.restore();
-
-    context.save();
     this.#drawTextBox();
-    context.restore();
   }
 
   @bound
@@ -59,33 +54,24 @@ export class Indicator {
   }
 
   #drawLine() {
-    const context = this.timeAxis.context;
     const offsetX = this.#offsetX;
-
     const bottom = this.timeAxis.height;
     const lineColor = this.theme.lineColor;
-    context.strokeStyle = lineColor;
-    context.fillStyle = lineColor;
-    context.lineWidth = 1;
-
-    context.beginPath();
-    context.moveTo(offsetX - 4, 0);
-    context.lineTo(offsetX + 4, 0);
-    context.lineTo(offsetX, 4);
-    context.closePath();
-    context.fill();
-
-    context.beginPath();
-    context.moveTo(offsetX - 4, bottom);
-    context.lineTo(offsetX + 4, bottom);
-    context.lineTo(offsetX, bottom - 4);
-    context.closePath();
-    context.fill();
-
-    context.beginPath();
-    context.moveTo(offsetX, 0);
-    context.lineTo(offsetX, bottom);
-    context.stroke();
+    this.timeAxis.addShape({
+      type: 'triangle',
+      attrs: { x1: offsetX - 4, y1: 0, x2: offsetX + 4, y2: 0, x3: offsetX, y3: 4 },
+      style: { fill: lineColor },
+    });
+    this.timeAxis.addShape({
+      type: 'triangle',
+      attrs: { x1: offsetX - 4, y1: bottom, x2: offsetX + 4, y2: bottom, x3: offsetX, y3: bottom - 4 },
+      style: { fill: lineColor },
+    });
+    this.timeAxis.addShape({
+      type: 'line',
+      attrs: { x1: offsetX, y1: 0, x2: offsetX, y2: bottom },
+      style: { stroke: lineColor, lineWidth: 1 },
+    });
   }
 
   get displayText() {
@@ -108,25 +94,27 @@ export class Indicator {
   }
 
   #drawTextBox() {
-    const context = this.timeAxis.context;
     const offsetX = this.#offsetX;
     const bottom = this.timeAxis.baseline + this.textBoxTop;
     const text = this.displayText;
-    // 需先设置字体，才能准确计算出文字尺寸
-    context.font = this.theme.font ?? this.timeAxis.theme.font;
-    const textMetrics = measureText(context, text);
+    const theme = this.theme;
+    const shapeText: Shape = {
+      type: 'text',
+      attrs: { text, x: 0, y: bottom },
+      style: { fill: theme.labelColor, align: 'start', font: theme.font },
+    };
+    const textMetrics = this.timeAxis.measure(shapeText)!;
     // 四周额外增加 8px 的边距
     const padding = 8;
     const boxWidth = textMetrics.width + padding * 2;
     const boxHeight = textMetrics.height + padding * 2;
-    const boundStart = 0;
-    const boundEnd = this.timeAxis.width - boxWidth;
-    const boxPosX = clamp(offsetX - boxWidth / 2, boundStart, boundEnd);
-    context.fillStyle = this.theme.backgroundColor;
-    context.fillRect(boxPosX, bottom - textMetrics.ascent - padding, boxWidth, boxHeight);
-
-    context.fillStyle = this.theme.labelColor;
-    context.textAlign = 'start';
-    context.fillText(text, boxPosX + padding, bottom);
+    const boxPosX = clamp(offsetX - boxWidth / 2, 0, this.timeAxis.width - boxWidth);
+    this.timeAxis.addShape({
+      type: 'rect',
+      attrs: { x: boxPosX, y: bottom - textMetrics.ascent - padding, width: boxWidth, height: boxHeight },
+      style: { fill: theme.backgroundColor },
+    });
+    shapeText.attrs.x = boxPosX + padding;
+    this.timeAxis.addShape(shapeText);
   }
 }

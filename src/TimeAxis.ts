@@ -5,6 +5,7 @@ import { PreciseDate } from './date';
 
 import { defaultTheme, type Theme } from './theme';
 import { bound, withResolvers } from './utils';
+import { Shapes, type Shape } from './Shapes';
 
 interface Events extends ListenerMap {
   /** 当每帧渲染前 */
@@ -16,12 +17,12 @@ interface Events extends ListenerMap {
   destroyed: () => void;
 }
 
-interface TimeAxisOptions {
+export interface TimeAxisOptions {
   theme?: Theme;
 }
 
 export class TimeAxis {
-  context: CanvasRenderingContext2D;
+  #context: CanvasRenderingContext2D;
 
   /** 基线位置 */
   baseline = 28;
@@ -29,6 +30,8 @@ export class TimeAxis {
   date: PreciseDate;
 
   theme = defaultTheme;
+
+  #shapes: Shapes;
 
   #animationFrame = new AnimationFrame();
 
@@ -39,9 +42,12 @@ export class TimeAxis {
   #eventController = new AbortController();
 
   constructor(canvas: HTMLCanvasElement, options?: TimeAxisOptions) {
-    this.context = canvas.getContext('2d')!;
+    this.#context = canvas.getContext('2d')!;
     this.#markLineController = new MarkLineController(this);
     this.theme = options?.theme ?? defaultTheme;
+    this.#shapes = new Shapes(this.#context);
+
+    this.#setGlobalStyle();
     this.#setRect();
     this.onNative('wheel', this.#onWheel, { passive: false });
   }
@@ -51,11 +57,11 @@ export class TimeAxis {
   }
 
   get height() {
-    return this.transformPointInverse({ y: this.context.canvas.height }).y;
+    return this.transformPointInverse({ y: this.#context.canvas.height }).y;
   }
 
   get width() {
-    return this.transformPointInverse({ x: this.context.canvas.width }).x;
+    return this.transformPointInverse({ x: this.#context.canvas.width }).x;
   }
 
   get markLine() {
@@ -81,11 +87,11 @@ export class TimeAxis {
     options?: { once?: boolean; passive?: boolean }
   ) {
     const signal = this.#eventController.signal;
-    this.context.canvas.addEventListener(type, listener, { signal, ...options });
+    this.#context.canvas.addEventListener(type, listener, { signal, ...options });
   }
 
   offNative<K extends keyof HTMLElementEventMap>(type: K, listener: (ev: HTMLElementEventMap[K]) => void) {
-    this.context.canvas.removeEventListener(type, listener);
+    this.#context.canvas.removeEventListener(type, listener);
   }
 
   destroy() {
@@ -98,10 +104,11 @@ export class TimeAxis {
   }
 
   clear() {
-    const canvas = this.context.canvas;
-    this.context.clearRect(0, 0, canvas.width, canvas.height);
-    this.context.fillStyle = this.theme.backgroundColor;
-    this.context.fillRect(0, 0, canvas.width, canvas.height);
+    const canvas = this.#context.canvas;
+    this.#context.clearRect(0, 0, canvas.width, canvas.height);
+    this.#context.fillStyle = this.theme.backgroundColor;
+    this.#context.fillRect(0, 0, canvas.width, canvas.height);
+    this.#shapes.clear();
   }
 
   render() {
@@ -175,6 +182,14 @@ export class TimeAxis {
     this.#draw();
   }
 
+  addShape(shape: Shape) {
+    this.#shapes.add(shape);
+  }
+
+  measure(shape: Shape) {
+    return this.#shapes.measure(shape);
+  }
+
   use(...args: Parameters<MarkLineController['use']>) {
     this.#markLineController.use(...args);
   }
@@ -184,27 +199,27 @@ export class TimeAxis {
   }
 
   transformPointInverse(origin: { x?: number; y?: number }) {
-    const point = this.context.getTransform().inverse().transformPoint(origin);
+    const point = this.#context.getTransform().inverse().transformPoint(origin);
     return { x: point.x, y: point.y };
   }
 
   #setRect() {
     const ratio = window.devicePixelRatio;
-    const canvas = this.context.canvas;
+    const canvas = this.#context.canvas;
     canvas.width = canvas.clientWidth * ratio;
     canvas.height = canvas.clientHeight * ratio;
     // 缩放转换后，外部坐标和内部坐标相同，仅尺寸不同
-    this.context.scale(ratio, ratio);
+    this.#context.scale(ratio, ratio);
   }
 
   #draw() {
     this.clear();
     if (this.date == null) return;
-    this.#setGlobalStyle();
     this.#emitter.emit('beforeDraw');
     this.#drawAxisLine();
     this.#markLineController.draw();
     this.#emitter.emit('drawn');
+    this.#shapes.drawAll();
   }
 
   @bound
@@ -215,25 +230,29 @@ export class TimeAxis {
   }
 
   #drawAxisLine() {
-    const context = this.context;
-    context.save();
-    context.strokeStyle = this.theme.lineColor;
-    context.lineWidth = 1;
-    context.beginPath();
     // 1px 线段会在路径两边各延伸 0.5px, 再非高分辨率屏下，其边缘不在像素边界位置，出现模糊
-    context.moveTo(0, this.baseline + 0.5);
-    context.lineTo(this.width, this.baseline + 0.5);
-    context.stroke();
-    context.restore();
+    const y = Math.trunc(this.baseline) + 0.5;
+    this.addShape({
+      type: 'line',
+      attrs: { x1: 0, y1: y, x2: this.width, y2: y },
+      style: { lineWidth: 1, stroke: this.theme.lineColor },
+    });
   }
 
   #setGlobalStyle() {
-    const context = this.context;
+    const context = this.#context;
     context.textAlign = 'center';
     context.lineWidth = 1;
     context.font = this.theme.font;
     context.fillStyle = this.theme.textColor;
     context.strokeStyle = this.theme.textColor;
+    this.#shapes.collectDefaultStyle();
+  }
+
+  update(options: TimeAxisOptions) {
+    this.theme = options.theme ?? this.theme;
+    this.#setGlobalStyle();
+    this.#draw();
   }
 
   fitByDateRange(start: PreciseDate, end: PreciseDate) {

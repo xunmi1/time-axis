@@ -39,25 +39,21 @@ export class MarkScale {
   draw() {
     const timeAxis = this.timeAxis;
     if (!timeAxis.markLine) return;
-    const context = this.timeAxis.context;
     const width = this.width;
     const right = this.right;
     const bottom = this.bottom;
-    context.save();
-    context.beginPath();
     const tickHeight = 6;
     const startX = timeAxis.width - width - right;
     const endX = timeAxis.width - right;
     const startY = timeAxis.height - bottom - tickHeight;
     const endY = timeAxis.height - bottom;
-    context.moveTo(startX, startY);
-    context.lineTo(startX, endY);
-    context.lineTo(endX, endY);
-    context.lineTo(endX, startY);
-    context.stroke();
-    context.textAlign = 'center';
-    context.font = this.timeAxis.theme.font;
-    context.fillText(this.displayText, startX + width / 2, startY);
-    context.restore();
+    this.timeAxis.addShape({
+      type: 'path',
+      attrs: { paths: [startX, startY, startX, endY, endX, endY, endX, startY] },
+    });
+    this.timeAxis.addShape({
+      type: 'text',
+      attrs: { x: startX + width / 2, y: startY, text: this.displayText },
+    });
   }
 }

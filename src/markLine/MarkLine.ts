@@ -36,20 +36,23 @@ export abstract class MarkLine {
   }
 
   drawMarkLine(x: number, y: number, length: number) {
-    this.timeAxis.context.strokeStyle = this.timeAxis.theme.axis.tickColor;
-    const context = this.timeAxis.context;
-    context.beginPath();
-    context.moveTo(x, this.timeAxis.baseline + y);
-    context.lineTo(x, this.timeAxis.baseline + y + length);
-    context.stroke();
+    const y1 = this.timeAxis.baseline + y;
+    this.timeAxis.addShape({
+      type: 'line',
+      attrs: { x1: x, y1, x2: x, y2: y1 + length },
+      style: { stroke: this.timeAxis.theme.axis.tickColor },
+    });
   }
 
   fillText(date: PreciseDate, x: number, level: 'primary' | 'secondary') {
-    const context = this.timeAxis.context;
-    context.fillStyle = this.timeAxis.theme.axis.labelColor;
-    const posY = level === 'primary' ? -8 : MarkLine.LARGE + 12;
+    const offsetY = level === 'primary' ? -8 : MarkLine.LARGE + 12;
     const text = this.formatter(date, level);
-    this.timeAxis.context.fillText(text, x, this.timeAxis.baseline + posY);
+
+    this.timeAxis.addShape({
+      type: 'text',
+      attrs: { x, y: this.timeAxis.baseline + offsetY, text },
+      style: { fill: this.timeAxis.theme.axis.labelColor },
+    });
   }
 
   /** 每一刻度线代表的时长, 单位: 毫秒 */

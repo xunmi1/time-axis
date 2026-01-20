@@ -33,7 +33,6 @@ export class PointerIndicator extends Indicator {
   }
 
   @bound
-  @bound
   #updateDate() {
     this.date = this.x == null ? undefined : this.timeAxis.getDateByPos(this.x);
   }
