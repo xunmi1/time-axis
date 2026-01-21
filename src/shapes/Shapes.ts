@@ -1,4 +1,5 @@
-import { BaseShape } from './BaseShape';
+import type { SortedArray } from './SortedArray';
+import { BaseShape, createShapeChildren } from './BaseShape';
 import { LineShape } from './LineShape';
 import { PolylineShape } from './PolylineShape';
 import { RectShape } from './RectShape';
@@ -41,14 +42,15 @@ const buildInShapes = {
 } as const;
 
 export class Shapes {
-  #shapeMap: Map<ShapeType, ShapeConstructor> = new Map();
-  #shapeQueue = new Set<Shape>();
+  #shapeMap: Map<ShapeType, ShapeConstructor>;
+  #shapes: SortedArray<Shape>;
   #context: Context;
 
   #defaultStyle: DefaultStyle;
 
   constructor(context: Context) {
     this.#context = context;
+    this.#shapes = createShapeChildren();
     this.#shapeMap = new Map(Object.entries(buildInShapes) as [ShapeType, ShapeConstructor][]);
   }
 
@@ -58,7 +60,7 @@ export class Shapes {
   }
 
   draw() {
-    this.#shapeQueue.forEach(shape => this.#draw(shape));
+    this.#shapes.forEach(shape => this.#draw(shape));
   }
 
   #draw(shape: Shape) {
@@ -87,15 +89,17 @@ export class Shapes {
   }
 
   add(shapeOrParams: CreateShape) {
-    this.#shapeQueue.add(this.create(shapeOrParams));
+    const shape = this.create(shapeOrParams);
+    this.#shapes.add(shape);
+    return shape;
   }
 
   remove(shape: Shape) {
-    this.#shapeQueue.delete(shape);
+    this.#shapes.remove(shape);
   }
 
   clear() {
-    this.#shapeQueue.clear();
+    this.#shapes.clear();
   }
 
   measure(shape: Shape) {

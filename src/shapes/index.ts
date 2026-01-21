@@ -1,5 +1,5 @@
 export * from './Vector2D';
-export * from './BaseShape';
+export { BaseShape } from './BaseShape';
 export { LineShape } from './LineShape';
 export { PolylineShape } from './PolylineShape';
 export { RectShape } from './RectShape';

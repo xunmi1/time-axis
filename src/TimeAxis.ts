@@ -189,7 +189,7 @@ export class TimeAxis {
   }
 
   addShape(shape: CreateShape) {
-    this.#shapes.add(shape);
+    return this.#shapes.add(shape);
   }
 
   createShape<T extends ShapeType>(params: CreateShape<T>) {

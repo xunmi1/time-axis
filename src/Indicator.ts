@@ -23,6 +23,7 @@ export class Indicator {
   #offsetX = 0;
 
   textBoxTop = 48;
+  zIndex = 10;
 
   constructor(timeAxis: TimeAxis) {
     this.timeAxis = timeAxis;
@@ -55,23 +56,28 @@ export class Indicator {
 
   #drawLine() {
     const lineColor = this.theme.lineColor;
+    const zIndex = this.zIndex;
     const start = new Vector2D(this.#offsetX, 0);
     const end = new Vector2D(this.#offsetX, this.timeAxis.height);
+
     this.timeAxis.addShape({
       type: 'line',
       attrs: { start, end },
       style: { color: lineColor, width: 1 },
+      zIndex,
     });
     const polygonStyle = { fillColor: lineColor };
     this.timeAxis.addShape({
       type: 'polygon',
       attrs: { points: [start.subtract(4, 0), start.add(4, 0), start.add(0, 4)] },
       style: polygonStyle,
+      zIndex,
     });
     this.timeAxis.addShape({
       type: 'polygon',
       attrs: { points: [end.subtract(4, 0), end.add(4, 0), end.subtract(0, 4)] },
       style: polygonStyle,
+      zIndex,
     });
   }
 
@@ -124,6 +130,7 @@ export class Indicator {
       attrs: { start: boxStart, end: boxStart.add(boxWidth, boxHeight) },
       style: { fillColor: theme.backgroundColor },
       children: [textShape],
+      zIndex: this.zIndex,
     });
   }
 }
