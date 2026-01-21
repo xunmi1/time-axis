@@ -16,7 +16,6 @@ const shortUnitMap = new Map([
 export class MarkScale {
   timeAxis: TimeAxis;
 
-  width = 72;
   bottom = 8;
   right = 2;
 
@@ -40,17 +39,21 @@ export class MarkScale {
   draw() {
     const timeAxis = this.timeAxis;
     if (!timeAxis.markLine) return;
-    const width = this.width;
     const tickHeight = 6;
-    const start = timeAxis.size.subtract(width + this.right, this.bottom + tickHeight);
+    const textShape = timeAxis.createShape({
+      type: 'text',
+      attrs: { start: new Vector2D(0, 0), text: this.displayText },
+      style: { align: 'center', font: timeAxis.theme.font },
+    });
+    const rect = timeAxis.measure(textShape)!;
+    const width = Math.max(Math.trunc(rect.width) + 16, 74);
+    const start = timeAxis.boundary.subtract(width + this.right, this.bottom + tickHeight);
+    textShape.attrs.start = start.add(width / 2, -2);
+    this.timeAxis.addShape(textShape);
+
     this.timeAxis.addShape({
       type: 'polyline',
       attrs: { points: [start, start.add(0, tickHeight), start.add(width, tickHeight), start.add(width, 0)] },
-    });
-    this.timeAxis.addShape({
-      type: 'text',
-      attrs: { start: start.add(width / 2, -2), text: this.displayText },
-      style: { align: 'center' },
     });
   }
 }

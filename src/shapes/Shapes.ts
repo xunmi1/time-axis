@@ -2,33 +2,41 @@ import { BaseShape } from './BaseShape';
 import { LineShape } from './LineShape';
 import { PolylineShape } from './PolylineShape';
 import { RectShape } from './RectShape';
-import { TriangleShape } from './TriangleShape';
+import { PolygonShape } from './PolygonShape';
 import { TextShape } from './TextShape';
 import { setStyle, type Context, type DefaultStyle } from './utils';
+import { Vector2D } from './Vector2D';
 
+/** exportable shapes type */
 export interface ShapeMap {
   line: typeof LineShape;
   polyline: typeof PolylineShape;
   rect: typeof RectShape;
-  triangle: typeof TriangleShape;
+  polygon: typeof PolygonShape;
   text: typeof TextShape;
 }
 
 export type ShapeType = keyof ShapeMap;
 
-export type Shape = InstanceType<ShapeMap[ShapeType]>;
+export type Shape<T = ShapeType> = T extends ShapeType ? InstanceType<ShapeMap[T]> : never;
 
-type ShapeConstructor = {
-  new (...arg: any): Shape;
+type ShapeConstructor<T = ShapeType> = {
+  new (...arg: any): Shape<T>;
 };
 
-export type CreateShape = Shape | (ConstructorParameters<ShapeMap[ShapeType]>[0] & { type: ShapeType });
+type ShapeParams<T extends ShapeType> = ConstructorParameters<ShapeMap[T]>[0];
+
+type CreateShapeParams<T = ShapeType> = T extends ShapeType
+  ? Omit<ShapeParams<T>, 'children'> & { type: T; children?: CreateShape[] }
+  : never;
+
+export type CreateShape<T = ShapeType> = Shape<T> | CreateShapeParams<T>;
 
 const buildInShapes = {
   line: LineShape,
   polyline: PolylineShape,
   rect: RectShape,
-  triangle: TriangleShape,
+  polygon: PolygonShape,
   text: TextShape,
 } as const;
 
@@ -44,30 +52,42 @@ export class Shapes {
     this.#shapeMap = new Map(Object.entries(buildInShapes) as [ShapeType, ShapeConstructor][]);
   }
 
-  use<T extends ShapeType>(type: T, shape: ShapeConstructor) {
-    this.#shapeMap.set(type, shape);
+  use<T extends ShapeType>(type: T, Ctor: ShapeConstructor) {
+    this.#shapeMap.set(type, Ctor);
     return this;
   }
 
-  draw(shape: Shape) {
+  draw() {
+    this.#shapeQueue.forEach(shape => this.#draw(shape));
+  }
+
+  #draw(shape: Shape) {
     shape.draw(this.#context);
     this.#resetToDefaultStyle();
+
+    if (shape.children?.length) {
+      const anchor = Vector2D.from(shape.anchor);
+      // make children draw relative to anchor
+      this.#context.translate(anchor.x, anchor.y);
+      shape.children.forEach(child => this.#draw(child));
+      const anchorNegated = anchor.negate();
+      this.#context.translate(anchorNegated.x, anchorNegated.y);
+    }
   }
 
-  drawAll() {
-    this.#shapeQueue.forEach(shape => this.draw(shape));
-  }
-
-  create(shapeOrParams: CreateShape) {
-    if (shapeOrParams instanceof BaseShape) return shapeOrParams;
-    const { type, ...rest } = shapeOrParams;
-    const Ctor = this.#shapeMap.get(type);
-    if (Ctor) return new Ctor(rest);
+  create<T extends ShapeType>(params: CreateShape<T>): Shape<T> {
+    if (params instanceof BaseShape) return params;
+    const { type, ...shape } = params;
+    const Ctor = this.#shapeMap.get(type) as ShapeConstructor<T> | undefined;
+    if (!Ctor) throw new Error(`Unsupported shape type: ${type}`);
+    if (shape.children) {
+      shape.children = shape.children.map(child => this.create(child));
+    }
+    return new Ctor(shape);
   }
 
   add(shapeOrParams: CreateShape) {
-    const shape = this.create(shapeOrParams);
-    if (shape) this.#shapeQueue.add(shape);
+    this.#shapeQueue.add(this.create(shapeOrParams));
   }
 
   remove(shape: Shape) {
@@ -78,9 +98,8 @@ export class Shapes {
     this.#shapeQueue.clear();
   }
 
-  measure(shapeOrParams: CreateShape) {
-    const shape = this.create(shapeOrParams);
-    return shape?.measure?.(this.#context);
+  measure(shape: Shape) {
+    return shape.measure?.(this.#context);
   }
 
   collectDefaultStyle() {

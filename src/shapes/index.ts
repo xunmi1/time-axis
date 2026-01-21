@@ -1,8 +1,8 @@
 export * from './Vector2D';
-export { BaseShape } from './BaseShape';
+export * from './BaseShape';
 export { LineShape } from './LineShape';
 export { PolylineShape } from './PolylineShape';
 export { RectShape } from './RectShape';
-export { TriangleShape } from './TriangleShape';
+export { PolygonShape } from './PolygonShape';
 export { TextShape } from './TextShape';
 export * from './Shapes';

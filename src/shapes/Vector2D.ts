@@ -1,6 +1,6 @@
 type Component = 'x' | 'y';
 type Vector2DArray = [x: number, y: number];
-type Vector2DLike = Vector2DArray | Record<Component, number> | Vector2D;
+export type Vector2DLike = Vector2DArray | Record<Component, number> | Vector2D;
 
 /** 二维向量 */
 export class Vector2D {
@@ -43,9 +43,17 @@ export class Vector2D {
     return this.map(v => v * k);
   }
 
-  /**
-   * Project—zero out the other components.
-   */
+  /** Cross product, **returns a scalar** */
+  cross(vector: Vector2D) {
+    return this.x * vector.y - this.y * vector.x;
+  }
+
+  /** Dot product, **returns a scalar** */
+  dot(vector: Vector2D) {
+    return this.x * vector.x + this.y * vector.y;
+  }
+
+  /** Project—zero out the other components */
   project(component: Component) {
     return this.map((v, k) => (k === component ? v : 0));
   }

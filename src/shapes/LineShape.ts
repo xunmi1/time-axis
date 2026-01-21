@@ -13,6 +13,9 @@ type Style = {
 };
 
 export class LineShape extends BaseShape<Attrs, Style> {
+  get anchor() {
+    return this.attrs.start;
+  }
   draw(ctx: Context) {
     const style = this.style;
     const attrs = this.attrs;

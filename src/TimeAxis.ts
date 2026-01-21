@@ -5,7 +5,7 @@ import { PreciseDate } from './date';
 
 import { defaultTheme, type Theme } from './theme';
 import { bound, withResolvers } from './utils';
-import { Shapes, type CreateShape } from './shapes/Shapes';
+import { Shapes, type CreateShape, type Shape, type ShapeType } from './shapes';
 import { Vector2D } from './shapes';
 
 interface Events extends ListenerMap {
@@ -57,17 +57,17 @@ export class TimeAxis {
     return this.#animationFrame.isActive;
   }
 
-  get size() {
+  get boundary() {
     const canvas = this.#context.canvas;
     return this.transformInverse(new Vector2D(canvas.width, canvas.height));
   }
 
   get height() {
-    return this.size.y;
+    return this.boundary.y;
   }
 
   get width() {
-    return this.size.x;
+    return this.boundary.x;
   }
 
   get markLine() {
@@ -192,7 +192,11 @@ export class TimeAxis {
     this.#shapes.add(shape);
   }
 
-  measure(shape: CreateShape) {
+  createShape<T extends ShapeType>(params: CreateShape<T>) {
+    return this.#shapes.create(params);
+  }
+
+  measure(shape: Shape) {
     return this.#shapes.measure(shape);
   }
 
@@ -225,7 +229,7 @@ export class TimeAxis {
     this.#drawAxisLine();
     this.#markLineController.draw();
     this.#emitter.emit('drawn');
-    this.#shapes.drawAll();
+    this.#shapes.draw();
   }
 
   @bound
