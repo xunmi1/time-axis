@@ -1,4 +1,3 @@
-import { Vector2D } from './shapes';
 import type { TimeAxis } from './TimeAxis';
 import { bound } from './utils';
 
@@ -18,6 +17,10 @@ export class MarkScale {
 
   bottom = 8;
   right = 2;
+  markWidth = 74;
+  markHeight = 6;
+
+  zIndex = 5;
 
   constructor(timeAxis: TimeAxis) {
     this.timeAxis = timeAxis;
@@ -39,21 +42,27 @@ export class MarkScale {
   draw() {
     const timeAxis = this.timeAxis;
     if (!timeAxis.markLine) return;
-    const tickHeight = 6;
-    const textShape = timeAxis.createShape({
-      type: 'text',
-      attrs: { start: new Vector2D(0, 0), text: this.displayText },
-      style: { align: 'center', font: timeAxis.theme.font },
-    });
-    const rect = timeAxis.measure(textShape)!;
-    const width = Math.max(Math.trunc(rect.width) + 16, 74);
-    const start = timeAxis.boundary.subtract(width + this.right, this.bottom + tickHeight);
-    textShape.attrs.start = start.add(width / 2, -2);
-    this.timeAxis.addShape(textShape);
+    const markWidth = this.markWidth;
+    const markHeight = this.markHeight;
+    const start = timeAxis.boundary.subtract(markWidth + this.right, markHeight + this.bottom);
 
-    this.timeAxis.addShape({
-      type: 'polyline',
-      attrs: { points: [start, start.add(0, tickHeight), start.add(width, tickHeight), start.add(width, 0)] },
+    this.timeAxis.addNode({
+      type: 'group',
+      zIndex: this.zIndex,
+      children: [
+        {
+          type: 'polyline',
+          attrs: {
+            points: [start, start.add(0, markHeight), start.add(markWidth, markHeight), start.add(markWidth, 0)],
+          },
+          style: { lineWidth: 1 },
+        },
+        {
+          type: 'text',
+          attrs: { start: start.add(markWidth / 2, markHeight - 4), text: this.displayText },
+          style: { align: 'center', font: timeAxis.theme.font },
+        },
+      ],
     });
   }
 }

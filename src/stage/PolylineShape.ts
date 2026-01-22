@@ -1,4 +1,4 @@
-import { BaseShape } from './BaseShape';
+import { Shape } from './Shape';
 import { setStyle, type Context, type DefaultStyle } from './utils';
 import type { Vector2D } from './Vector2D';
 
@@ -8,10 +8,10 @@ type Attrs = {
 
 type Style = {
   color?: DefaultStyle['strokeStyle'];
-  width?: DefaultStyle['lineWidth'];
+  lineWidth?: DefaultStyle['lineWidth'];
 };
 
-export class PolylineShape extends BaseShape<Attrs, Style> {
+export class PolylineShape extends Shape<Attrs, Style> {
   get anchor() {
     return this.attrs.points[0];
   }
@@ -23,7 +23,7 @@ export class PolylineShape extends BaseShape<Attrs, Style> {
 
     const style = this.style;
     setStyle(ctx, 'strokeStyle', style.color);
-    setStyle(ctx, 'lineWidth', style.width);
+    setStyle(ctx, 'lineWidth', style.lineWidth);
     points.forEach((point, i) => {
       if (i === 0) ctx.lineTo(point.x, point.y);
       else ctx.lineTo(point.x, point.y);

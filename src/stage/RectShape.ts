@@ -1,4 +1,4 @@
-import { BaseShape } from './BaseShape';
+import { Shape } from './Shape';
 import { setStyle, type Context, type DefaultStyle } from './utils';
 import type { Vector2D } from './Vector2D';
 
@@ -13,7 +13,7 @@ type Style = {
   borderWidth?: DefaultStyle['lineWidth'];
 };
 
-export class RectShape extends BaseShape<Attrs, Style> {
+export class RectShape extends Shape<Attrs, Style> {
   get anchor() {
     return this.attrs.start;
   }

@@ -2,7 +2,7 @@ type PickKeys<T, R> = {
   [P in keyof T]: R extends T[P] ? P : T[P] extends R ? P : never;
 }[keyof T];
 
-export type Context = CanvasRenderingContext2D;
+export type Context = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
 export type DefaultStyle = Partial<Pick<Context, PickKeys<Context, string | number | boolean>>> & {
   lineDash?: Iterable<number>;

@@ -17,6 +17,10 @@ export class SortedArray<T> {
     return this.#buffer.at(index);
   }
 
+  indexOf(item: T) {
+    return this.#buffer.indexOf(item);
+  }
+
   add(item: T) {
     const index = this.#upperBound(item);
     this.#insert(item, index);
@@ -29,7 +33,7 @@ export class SortedArray<T> {
     this.#buffer.splice(index, 1);
   }
 
-  update(item: T) {
+  reindex(item: T) {
     this.remove(item);
     this.add(item);
   }
@@ -40,6 +44,10 @@ export class SortedArray<T> {
 
   forEach(fn: (item: T, index: number) => void) {
     this.#buffer.forEach(fn);
+  }
+
+  has(item: T) {
+    return this.#buffer.includes(item);
   }
 
   /** binary search to find index (upper bound of item) */

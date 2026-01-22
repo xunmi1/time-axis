@@ -1,4 +1,4 @@
-import { BaseShape } from './BaseShape';
+import { Shape } from './Shape';
 import { setStyle, type Context, type DefaultStyle } from './utils';
 import { Vector2D } from './Vector2D';
 
@@ -12,7 +12,7 @@ type Style = {
   borderWidth?: DefaultStyle['lineWidth'];
 };
 
-export class PolygonShape extends BaseShape<Attrs, Style> {
+export class PolygonShape extends Shape<Attrs, Style> {
   get anchor() {
     // anchor is the polygon's centroid
     return calculateCentroid(this.attrs.points) ?? this.attrs.points[0];

@@ -1,6 +1,6 @@
 export * from './date';
 export { MarkLine, presetMarkLines } from './markLine';
-export * from './shapes';
+export * from './stage';
 export { TimeAxis, type TimeAxisOptions } from './TimeAxis';
 export { Indicator } from './Indicator';
 export { PointerIndicator } from './PointerIndicator';

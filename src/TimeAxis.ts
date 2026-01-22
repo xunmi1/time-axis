@@ -5,8 +5,9 @@ import { PreciseDate } from './date';
 
 import { defaultTheme, type Theme } from './theme';
 import { bound, withResolvers } from './utils';
-import { Shapes, type CreateShape, type Shape, type ShapeType } from './shapes';
-import { Vector2D } from './shapes';
+import { Stage, type MaybeNode, type Node, type TextShape } from './stage';
+
+import { Vector2D } from './stage';
 
 interface Events extends ListenerMap {
   /** 当每帧渲染前 */
@@ -32,7 +33,7 @@ export class TimeAxis {
 
   theme = defaultTheme;
 
-  #shapes: Shapes;
+  #stage: Stage;
 
   #animationFrame = new AnimationFrame();
 
@@ -46,7 +47,7 @@ export class TimeAxis {
     this.#context = canvas.getContext('2d')!;
     this.#markLineController = new MarkLineController(this);
     this.theme = options?.theme ?? defaultTheme;
-    this.#shapes = new Shapes(this.#context);
+    this.#stage = new Stage(this.#context);
 
     this.#setGlobalStyle();
     this.#setRect();
@@ -114,7 +115,7 @@ export class TimeAxis {
     this.#context.clearRect(0, 0, canvas.width, canvas.height);
     this.#context.fillStyle = this.theme.backgroundColor;
     this.#context.fillRect(0, 0, canvas.width, canvas.height);
-    this.#shapes.clear();
+    this.#stage.clear();
   }
 
   render() {
@@ -188,16 +189,20 @@ export class TimeAxis {
     this.#draw();
   }
 
-  addShape(shape: CreateShape) {
-    return this.#shapes.add(shape);
+  addNode<T>(node: MaybeNode<T>) {
+    return this.#stage.add(node);
   }
 
-  createShape<T extends ShapeType>(params: CreateShape<T>) {
-    return this.#shapes.create(params);
+  createNode<T>(params: MaybeNode<T>) {
+    return this.#stage.create(params);
   }
 
-  measure(shape: Shape) {
-    return this.#shapes.measure(shape);
+  removeNode(node: Node) {
+    this.#stage.remove(node);
+  }
+
+  measure(shape: TextShape) {
+    return shape.measure(this.#context);
   }
 
   use(...args: Parameters<MarkLineController['use']>) {
@@ -229,7 +234,7 @@ export class TimeAxis {
     this.#drawAxisLine();
     this.#markLineController.draw();
     this.#emitter.emit('drawn');
-    this.#shapes.draw();
+    this.#stage.draw();
   }
 
   @bound
@@ -242,10 +247,10 @@ export class TimeAxis {
   #drawAxisLine() {
     // 1px 线段会在路径两边各延伸 0.5px, 再非高分辨率屏下，其边缘不在像素边界位置，出现模糊
     const start = new Vector2D(0, Math.trunc(this.baseline) + 0.5);
-    this.addShape({
+    this.addNode({
       type: 'line',
       attrs: { start, end: start.add(this.width, 0) },
-      style: { width: 1, color: this.theme.lineColor },
+      style: { color: this.theme.lineColor },
     });
   }
 
@@ -256,7 +261,7 @@ export class TimeAxis {
     context.font = this.theme.font;
     context.fillStyle = this.theme.textColor;
     context.strokeStyle = this.theme.textColor;
-    this.#shapes.collectDefaultStyle();
+    this.#stage.collectState();
   }
 
   update(options: TimeAxisOptions) {
